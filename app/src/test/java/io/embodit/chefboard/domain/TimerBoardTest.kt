@@ -10,6 +10,7 @@ import io.embodit.chefboard.domain.timer.TimerBoard
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -63,8 +64,8 @@ class TimerBoardTest {
         land(1, 300)
         b.pick(0); advance(400)
         assertFalse("placed timer answers while one floats", b.timerTappable(1))
-        assertFalse("rack timer answers while one floats", b.timerTappable(2))
-        assertTrue(b.dimmed(1)); assertTrue(b.dimmed(2)); assertFalse(b.dimmed(0))
+        assertTrue("rack timer swaps while one floats (D52)", b.timerTappable(2))
+        assertTrue(b.dimmed(1)); assertFalse(b.dimmed(2)); assertFalse(b.dimmed(0))
         assertTrue(b.tapTimer(1).isEmpty())
         // first pinch on the floating timer only asks
         assertTrue(b.tapTimer(0).single() is Ev.AskAgain)
@@ -141,6 +142,36 @@ class TimerBoardTest {
         b.pick(1); advance(400)
         assertTrue(b.tapSpot(2, Layout.spotCenter(2)).isEmpty())
         assertEquals(TState.STAGED, b.timers[1].state)
+    }
+
+    /** D52 / QA q2-1: A floats → pinch B on the rack → B floats, A goes back to its slot. */
+    @Test fun swapRackTimerWhileOneFloats() {
+        b.pick(0); advance(400)
+        assertEquals(TState.STAGED, b.timers[0].state)
+        assertTrue(b.timerTappable(1))
+        val ev = b.tapTimer(1)
+        assertTrue(ev.any { it is Ev.Returning && it.slot == 0 })
+        assertTrue(ev.any { it is Ev.Picked && it.slot == 1 })
+        assertEquals(TState.STAGED, b.timers[1].state)
+        assertEquals(TState.RETURNING, b.timers[0].state)
+        assertSame(b.timers[1], b.staged)
+        advance(600)
+        assertEquals(TState.DOCKED, b.timers[0].state)
+        assertEquals(TState.STAGED, b.timers[1].state)
+        // and again: B floats → pinch A → A floats, B home
+        advance(100)
+        b.tapTimer(0)
+        advance(600)
+        assertEquals(TState.STAGED, b.timers[0].state)
+        assertEquals(TState.DOCKED, b.timers[1].state)
+    }
+
+    /** During A's pick-up animation a rack pinch is ignored (no swap mid-flight). */
+    @Test fun noSwapDuringPickAnimation() {
+        b.pick(0)
+        assertFalse(b.timerTappable(1))
+        assertTrue(b.tapTimer(1).isEmpty())
+        assertEquals(TState.DOCKED, b.timers[1].state)
     }
 
     @Test fun debounce300() {

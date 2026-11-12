@@ -98,21 +98,24 @@ class TimerBoard(private val clock: () -> Long) {
     private fun animating(t: Timer, now: Long): Boolean = t.anim?.let { now - it.startMs < it.durMs } == true
 
     /**
-     * While a timer floats only it, its three buttons, the free rings and the window respond; the others are dimmed
-     * (M16). Ringing timers still answer (到点优先). Timers in flight never answer.
+     * While a timer floats only it, its three buttons, the free rings, the other rack timers and the window respond;
+     * placed timers and the plate are dimmed (M16). A rack timer pinched while another floats = swap: the floating one
+     * goes home and the new one floats (D52, QA q2-1; design globalRules[0]). Ringing timers still answer (到点优先).
+     * Timers in flight never answer.
      */
     fun timerTappable(slot: Int): Boolean {
         val t = timers[slot]; val now = clock()
         if (t.state == TState.FLYING || t.state == TState.RETURNING || t.state == TState.STOPPED) return false
         if (t.state == TState.STAGED) return !animating(t, now)
         if (t.state == TState.RINGING) return true
+        if (t.state == TState.DOCKED) return staged?.let { !animating(it, now) } ?: true
         return staged == null
     }
 
     fun dimmed(slot: Int): Boolean {
         val s = staged ?: return false
         val t = timers[slot]
-        return t !== s && t.state != TState.RINGING && t.state != TState.RETURNING
+        return t !== s && t.state != TState.RINGING && t.state != TState.RETURNING && t.state != TState.DOCKED
     }
 
     fun plateTappable(): Boolean = staged == null
