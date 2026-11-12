@@ -49,7 +49,7 @@
     <string name="level_hint">平视前方</string>
     <string name="look_window">菜谱窗在这 · 看过来</string>
     <string name="look_stove">看向灶台那边 · 停一下</string>
-    <string name="plate_open">捏我开菜谱</string>
+    <string name="plate_open">◀ 捏铭牌开菜谱</string>
     <string name="first_run">捏我计时</string>
     <string name="tag_look">看个圈 · 捏一下</string>
     <string name="tag_add">先加点时间</string>

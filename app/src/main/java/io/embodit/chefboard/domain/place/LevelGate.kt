@@ -12,6 +12,10 @@ import kotlin.math.abs
  * wants it 20° left of the stove. So an ask can carry a [target] yaw (deg, + left, world): the gate then also waits for
  * the head to face within [yawTolDeg] of it (the Stage shows「菜谱窗在这 · 看过来」there). After [targetTimeoutMs] the
  * target is dropped and the window opens wherever the user looks (Arrange then turns the kitchen to the window).
+ *
+ * QA #1 q1-1: a head that stays pitched (cooking = looking down at the counter) must not hold the window forever: after
+ * [pitchTimeoutMs] the pitch is ignored (the HUD shows「平视前方」until then, on the sight line). Every ask therefore
+ * opens within max([pitchTimeoutMs], [targetTimeoutMs]) = 8 s whatever the head does.
  */
 class LevelGate(
     val maxPitchDeg: Float = 10f,
@@ -19,6 +23,7 @@ class LevelGate(
     val noHeadMs: Long = 5000L,
     val yawTolDeg: Float = Arrange.GATE_TOL_DEG,
     val targetTimeoutMs: Long = 8000L,
+    val pitchTimeoutMs: Long = 3000L,
 ) {
     var pending: String? = null; private set
     var target: Float? = null; private set
@@ -60,12 +65,14 @@ class LevelGate(
             return "$why/nohead"
         }
         noHeadSinceMs = -1L
-        if (abs(pitchDeg) > maxPitchDeg || !facing(now, yawDeg)) { levelSinceMs = -1L; return null }
+        val pitchOk = abs(pitchDeg) <= maxPitchDeg || now - askedMs >= pitchTimeoutMs
+        if (!pitchOk || !facing(now, yawDeg)) { levelSinceMs = -1L; return null }
         if (levelSinceMs < 0L) levelSinceMs = now
         if (now - levelSinceMs < dwellMs) return null
         val late = target != null && !targetActive(now)
+        val pitched = abs(pitchDeg) > maxPitchDeg
         cancel()
-        return if (late) "$why/notarget" else why
+        return why + (if (late) "/notarget" else "") + (if (pitched) "/pitched" else "")
     }
 
     fun hintWanted(pitchDeg: Float?): Boolean = pending != null && pitchDeg != null && abs(pitchDeg) > maxPitchDeg

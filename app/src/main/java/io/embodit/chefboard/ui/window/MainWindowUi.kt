@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -345,7 +346,7 @@ private fun SettingsPage(state: UiState, settings: Settings, flow: CookFlow, zh:
             BigButton(stringResource(R.string.recall), "settings/recall", onClick = { flow.recall() }, modifier = Modifier.weight(1f), icon = R.drawable.ic_my_location, height = 184.dp, stacked = true)
             BigButton(stringResource(R.string.exit), "settings/exit", onClick = { flow.exitAsk() }, modifier = Modifier.weight(1f), icon = R.drawable.ic_logout, height = 184.dp, stacked = true)
         }
-        Txt(stringResource(R.string.version_line, BuildConfig.VERSION_NAME), "settings/version", style = PicoTheme.typography.bodySmall.copy(fontSize = 18.sp), color = PicoTheme.colorScheme.labelSecondary, modifier = Modifier.height(24.dp))
+        Txt(stringResource(R.string.version_line, BuildConfig.VERSION_NAME), "settings/version", style = PicoTheme.typography.bodySmall.copy(fontSize = 18.sp, lineHeight = 22.sp), color = PicoTheme.colorScheme.labelSecondary, modifier = Modifier.heightIn(min = 24.dp))
     }
 }
 

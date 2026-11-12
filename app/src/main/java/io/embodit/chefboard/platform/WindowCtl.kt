@@ -60,7 +60,7 @@ class WindowCtl {
         main.removeCallbacks(watchdog)
     }
 
-    /** Ask for the window; [targetYawDeg] (world yaw, + left) = wait until the user faces there (or 6 s). */
+    /** Ask for the window; [targetYawDeg] (world yaw, + left) = wait until the user faces there (or 8 s; pitch ignored after 3 s). */
     fun request(why: String, targetYawDeg: Float? = null) {
         gate.ask(why, SystemClock.elapsedRealtime(), targetYawDeg)
         AppLog.i("WINDOW ask why=$why target=${targetYawDeg?.let { "%.1f".format(it) }} state=$panelState")

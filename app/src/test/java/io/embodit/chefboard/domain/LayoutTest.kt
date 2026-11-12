@@ -124,7 +124,7 @@ class LayoutTest {
         assertTrue(g.hintWanted(-30f))
         assertNull(g.step(600, 2f, 18f))
         assertEquals("start", g.step(950, 2f, 18f))
-        // timeout: the target is dropped after 6 s
+        // timeout: the target is dropped after 8 s
         g.ask("plate", 10_000L, 20f)
         assertNull(g.step(12_000, 0f, -60f))
         assertNull(g.step(18_100, 0f, -60f))
@@ -142,5 +142,36 @@ class LayoutTest {
             val face = q.rotate(Vec3(0f, 0f, 1f)); val toEye = Vec3(-p.x, 0f, -p.z).normalized()
             assertTrue(face.dot(toEye) > 0.9999f)
         }
+    }
+
+    /**
+     * QA #1 q1-2: the「◀ 捏铭牌开菜谱」hint sits right next to the brass plate (past the rack end, same height), points
+     * at it, and from every eye neither touches nor covers a docked timer (the old hint sat on top of timer 4), nor is it
+     * covered by the floating group or a timer on any ring.
+     */
+    @Test fun plateHintNextToThePlateNotOnATimer() {
+        val h = Layout.plateHintRect()
+        val plate = Layout.plateCenter
+        val along = (h.center - plate).dot(Layout.rackRight)
+        // left edge past the rack end and past the plate; gap to the plate ≤ 10 cm; plate height within ±1 cm
+        assertTrue("hint left edge along=$along hw=${h.halfW} c=${h.center} p=$plate r=${Layout.rackRight}", along - h.halfW >= Layout.RACK_LEN / 2f - Layout.PLATE_X)
+        assertTrue("hint gap to plate", along - h.halfW - Layout.PLATE_W / 2f <= 0.10f)
+        assertEquals(plate.y, h.center.y, 0.01f)
+        
+        val pts = h.corners + listOf(h.center)
+        for (s in 0 until 4) {
+            val b = Layout.dockedTimerBox(s)
+            for (p in pts) {
+                assertFalse("hint inside timer $s", b.contains(p))
+                for (e in eyes) assertFalse("eye→hint crosses timer $s", b.hitBy(e, p))
+            }
+            // and no horizontal overlap with any slot at all
+            assertTrue(Layout.PLATE_X + along - h.halfW > Layout.SLOT_X[s] + Layout.COLLIDER_D_DOCKED / 2f)
+        }
+        // the floating group, the rings and the window do not cover it either
+        val others = listOf(Layout.stageBox()) + (0 until 5).map { Layout.spotTimerBox(it) }
+        val bad = ArrayList<String>()
+        for ((k, b) in others.withIndex()) for ((i, p) in (pts + listOf(Layout.plateCenter)).withIndex()) for (e in eyes) if (b.hitBy(e, p)) bad += "box $k pt $i $p eye ${e.x}"
+        assertTrue(bad.joinToString("; "), bad.isEmpty())
     }
 }

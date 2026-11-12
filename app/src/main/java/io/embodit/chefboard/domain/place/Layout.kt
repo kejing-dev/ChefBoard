@@ -37,6 +37,13 @@ object Layout {
     const val PLATE_X = 0.30f
     const val PLATE_W = 0.08f
     const val STAGE_RISE = 0.15f
+    /**
+     * QA #1 q1-2: the「◀ 捏铭牌开菜谱」hint sits just past the rack's right end, level with the brass plate, pointing at
+     * it (rack local). Not over a timer, and clear of a timer standing on ring 4 (under the plate it was half covered).
+     */
+    const val PLATE_HINT_W = 0.20f
+    const val PLATE_HINT_H = 0.036f
+    val plateHintLocal: Vec3 get() = Vec3(RACK_LEN / 2f + 0.012f + PLATE_HINT_W / 2f, -RACK_THICK / 2f, RACK_DEPTH / 2f + 0.004f)
 
     // ---- drop rings E5
     val SPOT_AZ = floatArrayOf(-36f, -18f, 0f, 18f, 36f)
@@ -84,6 +91,13 @@ object Layout {
     fun rackPoint(x: Float, y: Float = 0f): Vec3 = rackTopCenter + rackRight * x + Vec3(0f, y, 0f)
     fun slotBase(slot: Int): Vec3 = rackPoint(SLOT_X[slot])
     val plateCenter: Vec3 get() = rackPoint(PLATE_X, -RACK_THICK / 2f)
+    /** Kitchen-frame rectangle of the plate hint (facing the eye like the rack). */
+    fun plateHintRect(): Rect3 {
+        val l = plateHintLocal; val toEye = Vec3(-rackTopCenter.x, 0f, -rackTopCenter.z).normalized()
+        return Rect3(rackPoint(l.x, l.y) + toEye * l.z, rackRight, Vec3.UP, PLATE_HINT_W / 2f, PLATE_HINT_H / 2f)
+    }
+    /** A docked timer on slot [s] with its collider (D35 / q1-2 tests). */
+    fun dockedTimerBox(s: Int): Box = upright(slotBase(s) + Vec3(0f, COLLIDER_H / 2f, 0f), COLLIDER_D_DOCKED / 2f, COLLIDER_H / 2f, COLLIDER_D_DOCKED / 2f)
     /** Where a picked-up timer floats: 0.15 m above the rack middle (its base). */
     val stageBase: Vec3 get() = rackPoint(0f, STAGE_RISE)
 

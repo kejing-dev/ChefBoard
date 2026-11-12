@@ -14,7 +14,8 @@ Main.kt                     DefaultStage (Mixed) + one Planar WindowContainer "C
 domain/place/Layout.kt      design spatialLayout in the kitchen frame (eye origin, −Z = stove): window az −20°, rack +22° 0.9 m,
                             rings −36…+36° at 0.70 m / eye −0.68 m, stage point, tag / button rows, D35 boxes
 domain/place/Arrange.kt     THE placement function: cold start, every window open, [叫回面前]
-domain/place/LevelGate.kt   D9 level gate + ChefBoard's yaw target (window opens while the user glances at az −20°)
+domain/place/LevelGate.kt   D9 level gate (pitch ignored after 3 s) + ChefBoard's yaw target for reopen (window opens while the user glances at az −20°, 8 s fallback)
+domain/place/ColdStart.kt   v0.1.1: first steady head (any pitch / roll) → kitchen at once, stove 20° right of the heading, window straight ahead
 domain/place/HeadSample.kt  D29 sampler for [叫回面前] (face the stove, hold still)
 domain/timer/Timers.kt      TimerBoard: docked → staged → flying → running ⇄ paused → ringing → stopped → returning; all globalRules
 domain/recipe/*             8 built-in recipes (zh / en), CookPages (prep pages + steps), Parser (paste → steps + times)

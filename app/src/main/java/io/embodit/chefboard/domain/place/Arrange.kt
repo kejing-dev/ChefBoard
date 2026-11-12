@@ -9,7 +9,7 @@ import io.embodit.chefboard.domain.math.Vec3
  * The kitchen pose = the eye + the stove's yaw. It is taken first (cold start: the level head once tracking is steady;
  * [叫回面前]: [HeadSampler] after the user turned to the stove, D29), then the window is asked for at the stove yaw + 20°
  * (left, design WINDOW_AZ −20°). When the window really opened there (± [GATE_TOL_DEG]) the kitchen stays; when it
- * opened elsewhere (the 6 s fallback, or a reopen while the user looked somewhere else) the kitchen turns so the window
+ * opened elsewhere (the 8 s reopen fallback, or a reopen while the user looked somewhere else) the kitchen turns so the window
  * sits at az −20° again — window and rack / rings never overlap (D35 unit test). Yaw only (D9).
  */
 object Arrange {
@@ -21,7 +21,20 @@ object Arrange {
     /** World yaw (deg, + left) at which the window is wanted for [pose]. */
     fun windowTargetYawDeg(pose: Layout.Pose): Float = deg(pose.yaw) - Layout.WINDOW_AZ
 
-    /** Cold start / [叫回面前] sample: stove straight ahead of the sampled head. */
+    /**
+     * Cold start (QA #1 q1-1 / q1-3): no waiting for a glance. The window will open straight ahead of the head, so the
+     * stove is put 20° to the right of the head's horizontal heading (pitch / roll ignored, D9) — the window then lands
+     * at az −20° on its own and [onWindowOpen] keeps the kitchen. Same result as the old fallback, without the 8 s wait.
+     */
+    fun coldStart(head: Vec3, headYaw: Float): Layout.Pose = Layout.Pose(head, headYaw + rad(Layout.WINDOW_AZ))
+
+    /** Horizontal yaw (radians, + left) of a head forward; a straight up / down look (no heading) gives [fallback]. */
+    fun headingOf(forward: Vec3, fallback: Float = 0f): Float {
+        val h = Vec3(forward.x, 0f, forward.z)
+        return if (h.length < 0.05f) fallback else Layout.yawOf(h.normalized())
+    }
+
+    /** [叫回面前] sample: stove straight ahead of the sampled head. */
     fun fromSample(head: Vec3, yaw: Float): Layout.Pose = Layout.Pose(head, yaw)
 
     /** The window just opened straight ahead of [head] at [windowYaw] (radians, + left). */

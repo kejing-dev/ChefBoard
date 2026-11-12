@@ -32,6 +32,7 @@ import io.embodit.chefboard.R
 import io.embodit.chefboard.domain.math.Quat4
 import io.embodit.chefboard.domain.math.Vec3
 import io.embodit.chefboard.domain.place.Arrange
+import io.embodit.chefboard.domain.place.ColdStart
 import io.embodit.chefboard.domain.place.HeadSampler
 import io.embodit.chefboard.domain.place.Layout
 import io.embodit.chefboard.domain.timer.Hint
@@ -124,7 +125,7 @@ class StageScene(private val graph: Graph, private val context: Context) {
     private var lastFrameMs = 0L
     private val sampler = HeadSampler(dwellMs = 300L)
     private var recallPending = false
-    private var levelSinceMs = -1L
+    private val coldStart = ColdStart()
     private var arrangedSeq = 0
     /** debug `state S00`: keep showing「准备中…」with the window closed. */
     var forceLoading = false
@@ -268,7 +269,8 @@ class StageScene(private val graph: Graph, private val context: Context) {
         model(r.plateFace, plateFaceMat!!, "plateFace", p, Vec3(0f, 0f, 0.0032f))
         plate = p
         plateHintMat = SceneRes.unlit(Pal.TAG_BG).also { r.keep(it) }
-        plateHint = model(r.hintPlate, plateHintMat!!, "plateHint", rack, Vec3(Layout.PLATE_X - 0.06f, 0.07f, 0.02f), scale = Vec3(0.8f, 0.8f, 0.8f)).also { it.show(false) }
+        // q1-2: just past the rack end, level with the plate, pointing at it (never over a timer)
+        plateHint = model(r.hintPlate, plateHintMat!!, "plateHint", rack, Layout.plateHintLocal, scale = Vec3(Layout.PLATE_HINT_W / 0.30f, Layout.PLATE_HINT_H / 0.045f, 1f)).also { it.show(false) }
         firstRunMat = SceneRes.unlit(Pal.TAG_BG).also { r.keep(it) }
         firstRun = model(r.hintPlate, firstRunMat!!, "firstRun", rack, Vec3(-0.04f, 0.20f, 0f)).also { it.show(false) }
 
@@ -392,22 +394,14 @@ class StageScene(private val graph: Graph, private val context: Context) {
         val yawDeg = hp?.let { HeadSampler.yawDeg(it.forward) }
         graph.window.stepFrame(hp?.let { it.position to it.forward }, hp?.pitchDeg, yawDeg)
         val r = res ?: return
-        // cold start: a level, steady head → kitchen straight ahead, window asked for at az −20° (S00 → S01)
+        // cold start (QA #1 q1-1 / q1-3): first steady head → kitchen at once (yaw only, any pitch / roll), window asked
+        // for straight ahead with no glance target, so it opens as soon as the head is level (≤ 3 s if it stays pitched)
         if (pose == null && !forceLoading) {
-            if (hp != null && head.steady && abs(hp.pitchDeg) <= 10f) {
-                if (levelSinceMs < 0) levelSinceMs = now
-                if (now - levelSinceMs >= 300L) {
-                    val p = Arrange.fromSample(hp.position, Layout.yawOf(Vec3(hp.forward.x, 0f, hp.forward.z).normalized()))
-                    placeKitchen(p, "start")
-                    graph.window.request("start", Arrange.windowTargetYawDeg(p))
-                    flow.loaded()
-                    if (!flow.settings.value.firstRunDone) { firstRunUntil = now + 3000L; flow.firstRunShown() }
-                }
-            } else levelSinceMs = -1L
-            if (pose == null && now - startedMs > 8000L && hp == null) {
-                placeKitchen(Arrange.fromSample(Vec3(0f, 1.6f, 0f), 0f), "start/nohead")
-                graph.window.request("start/nohead", null)
+            coldStart.step(now - startedMs, hp?.position, hp?.forward, hp != null && head.steady, lastPose?.position, lastPose?.forward)?.let { c ->
+                placeKitchen(c.pose, c.why + " pitch=" + (hp?.let { "%.0f".format(it.pitchDeg) } ?: "-"))
+                graph.window.request(c.why, null)
                 flow.loaded()
+                if (!flow.settings.value.firstRunDone) { firstRunUntil = now + 3000L; flow.firstRunShown() }
             }
         }
         if (graph.window.openSeq != arrangedSeq) arrangeForWindow()
@@ -647,7 +641,7 @@ class StageScene(private val graph: Graph, private val context: Context) {
         setStatic(btnMats[Button3D.P_PLUS1], "+1", 256, 256, Pal.OLIVE_DEEP, Pal.CREAM, "btn/pplus1", 0.55f)
         setStatic(btnMats[Button3D.P_BACK], str(R.string.btn_back), 256, 256, Pal.OLIVE_DEEP, Pal.CREAM, "btn/back", if (zh) 0.36f else 0.24f)
         setStatic(plateFaceMat, str(R.string.plate_name), 512, 128, Pal.BRASS, hex(0x2A1E12), "plate", 0.62f)
-        setStatic(plateHintMat, str(R.string.plate_open), 960, 144, Pal.TAG_BG, Pal.TAG_INK, "plateHint", 0.62f)
+        setStatic(plateHintMat, str(R.string.plate_open), 960, 144, Pal.TAG_BG, Pal.TAG_INK, "plateHint", 0.54f)
         setStatic(firstRunMat, str(R.string.first_run), 960, 144, Pal.TAG_BG, Pal.TAG_INK, "firstRun", 0.62f)
         lastLang = flow.settings.value.lang
     }
@@ -661,7 +655,8 @@ class StageScene(private val graph: Graph, private val context: Context) {
         val w = graph.window
         plateHint?.show(pose != null && !w.open && w.everOpened && !w.gate.waiting && !w.exiting && board.plateTappable())
         firstRun?.show(now < firstRunUntil)
-        // E6: ringing timer outside ±40° of the gaze → amber V at the edge of view (0.9 m, 30° toward it), yaw only
+        // E6: ringing timer outside ±40° of the gaze → amber V at the edge of view (0.9 m, 33° toward it, ×1.5; the name 5° further in), yaw only
+        // (QA #1 known issue: it sat at ~70 % of the view and the name covered its lower half)
         val ar = arrowRoot ?: return
         val ringing = board.ringing.firstOrNull()
         if (ringing == null || hp == null) { ar.show(false); arrowText?.show(false); return }
@@ -673,14 +668,15 @@ class StageScene(private val graph: Graph, private val context: Context) {
         ar.show(out); arrowText?.show(out)
         if (!out) return
         val side = if (d > 0f) 1f else -1f
-        val yaw = Math.toRadians((headYaw + side * 30f).toDouble())
+        val yaw = Math.toRadians((headYaw + side * ARROW_AZ).toDouble())
         val at = hp.position + Vec3(-sin(yaw).toFloat(), 0f, -kotlin.math.cos(yaw).toFloat()) * 0.9f + Vec3(0f, -0.08f, 0f)
         // the V points toward the timer: local −X is the tip; flip for the right side
         val face = faceEye(at, hp.position)
         val pointLeft = side > 0f
-        ar.place(position = at, rotation = if (pointLeft) face else face * Quat4.axisAngle(Vec3.UP, PI.toFloat()))
-        val tt = at + Vec3(0f, -0.045f, 0f)
-        arrowText?.place(position = tt, rotation = faceEye(tt, hp.position))
+        ar.place(position = at, rotation = if (pointLeft) face else face * Quat4.axisAngle(Vec3.UP, PI.toFloat()), scale = Vec3(1.5f, 1.5f, 1.5f))
+        val ty = Math.toRadians((headYaw + side * (ARROW_AZ - 5f)).toDouble())
+        val tt = hp.position + Vec3(-sin(ty).toFloat(), 0f, -kotlin.math.cos(ty).toFloat()) * 0.9f + Vec3(0f, -0.08f - 0.075f, 0f)
+        arrowText?.place(position = tt, rotation = faceEye(tt, hp.position), scale = Vec3(1.3f, 1.3f, 1.3f))
         val name = ringing.label?.let { if (graph.zh()) it.zh else it.en } ?: ""
         if (name != arrowName) { arrowName = name; setStatic(arrowTextMat, name, 560, 120, Pal.TAG_BG, Pal.TAG_INK, "arrow", 0.66f) }
     }
@@ -799,6 +795,8 @@ class StageScene(private val graph: Graph, private val context: Context) {
     companion object {
         /** Key light (lux-scale SDK value, build.md 2026-11-12: 0.8–1.2 = no light). Tuned on the emulator, ui-audit 灯光. */
         var KEY_LIGHT = 1200f
+        /** E6 arrow: degrees from the gaze toward the ringing timer (edge of view; it shows when the timer is > 40° away). */
+        const val ARROW_AZ = 33f
         fun fmt(v: Vec3?) = v?.let { "(%.3f, %.3f, %.3f)".format(it.x, it.y, it.z) } ?: "null"
     }
 }

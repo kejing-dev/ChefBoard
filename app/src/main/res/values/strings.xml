@@ -49,7 +49,7 @@
     <string name="level_hint">Look straight ahead</string>
     <string name="look_window">Recipe window here · look</string>
     <string name="look_stove">Face the stove · hold still</string>
-    <string name="plate_open">Pinch to open recipes</string>
+    <string name="plate_open">◀ Pinch for recipes</string>
     <string name="first_run">Pinch a timer</string>
     <string name="tag_look">Pinch a ring</string>
     <string name="tag_add">Add time first</string>
