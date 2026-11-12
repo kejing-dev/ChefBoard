@@ -55,9 +55,9 @@ for i, f in enumerate(["impactWood_light_000", "impactWood_light_002", "impactWo
 # everything above 6 kHz removed (design sound.events 去 6 kHz 以上尖峰), 0.9 s
 for i, f in enumerate(["impactBell_heavy_000", "impactBell_heavy_002"], 1):
     b = pitch(trim(load(IMP + f + ".ogg"), 1.6, thr=0.01, fade=0.25), 1.7)
-    y = np.zeros(int(0.95 * SR)); o = int(0.11 * SR)
+    y = np.zeros(int(0.75 * SR)); o = int(0.11 * SR)
     y[:min(len(b), len(y))] += b[:len(y)]
     y[o:o + min(len(b), len(y) - o)] += 0.8 * b[:len(y) - o]
     y = filt(filt(y, "lowpass", 6000, 4), "highpass", 300)
-    n = len(y); fd = int(0.25 * SR); y[n - fd:] *= np.linspace(1, 0, fd) ** 2
-    save(f"bell_{i}", norm(y), f"kenney_impact-sounds/{f}.ogg", "pitch ×1.7, two strikes 110 ms apart, band 300 Hz–6 kHz, 0.95 s, −1 dBFS")
+    n = len(y); fd = int(0.20 * SR); y[n - fd:] *= np.linspace(1, 0, fd) ** 2
+    save(f"bell_{i}", norm(y), f"kenney_impact-sounds/{f}.ogg", "pitch ×1.7, two strikes 110 ms apart, band 300 Hz–6 kHz, 0.75 s, −1 dBFS")

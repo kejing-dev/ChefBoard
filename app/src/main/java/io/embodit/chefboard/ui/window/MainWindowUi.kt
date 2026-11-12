@@ -123,7 +123,7 @@ fun MainWindowUi() {
 @Composable
 private fun Header(title: String, tag: String, settings: Settings, flow: CookFlow, extra: (@Composable () -> Unit)? = null) {
     Row(Modifier.fillMaxWidth().height(W.HEADER), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Txt(title, "$tag/title", style = PicoTheme.typography.titleLarge, modifier = Modifier.weight(1f), maxLines = 1)
+        Txt(title, "$tag/title", style = PicoTheme.typography.titleLarge.copy(fontSize = 28.sp), modifier = Modifier.weight(1f), maxLines = 1)
         extra?.invoke()
         MuteKey(settings.muted) { flow.toggleMute() }
     }
@@ -206,14 +206,14 @@ private fun Cell(id: String?, flow: CookFlow, zh: Boolean, modifier: Modifier, p
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
             // design-style: inherited-content-color Button
-            Txt(r.title.of(zh), "recipes/card/${r.id}", style = PicoTheme.typography.titleLarge, color = PicoTheme.colorScheme.labelPrimary, align = TextAlign.Center)
+            Txt(r.title.of(zh), "recipes/card/${r.id}", style = PicoTheme.typography.titleLarge.copy(fontSize = 30.sp, lineHeight = 36.sp), color = PicoTheme.colorScheme.labelPrimary, align = TextAlign.Center, maxLines = 2)
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Txt(stringResource(R.string.min_fmt, r.minutes), "recipes/card/${r.id}/min", style = PicoTheme.typography.labelLarge, color = PicoTheme.colorScheme.labelSecondary)
+                Txt(stringResource(R.string.min_fmt, r.minutes), "recipes/card/${r.id}/min", style = PicoTheme.typography.labelLarge.copy(fontSize = 22.sp), color = PicoTheme.colorScheme.labelSecondary)
                 if (r.timerCount > 0) {
                     Spacer(Modifier.width(14.dp))
-                    Icon(painter = painterResource(R.drawable.ic_clock_fill), contentDescription = null, tint = PicoTheme.colorScheme.labelSecondary, modifier = Modifier.size(22.dp))
+                    Icon(painter = painterResource(R.drawable.ic_clock_fill), contentDescription = null, tint = PicoTheme.colorScheme.labelSecondary, modifier = Modifier.size(26.dp))
                     Spacer(Modifier.width(4.dp))
-                    Txt("×${r.timerCount}", "recipes/card/${r.id}/timers", style = PicoTheme.typography.labelLarge, color = PicoTheme.colorScheme.labelSecondary)
+                    Txt("×${r.timerCount}", "recipes/card/${r.id}/timers", style = PicoTheme.typography.labelLarge.copy(fontSize = 22.sp), color = PicoTheme.colorScheme.labelSecondary)
                 }
             }
         }
@@ -228,7 +228,7 @@ private fun PastePage(p: Paste, state: UiState, settings: Settings, flow: CookFl
         when (p) {
             is Paste.Input -> {
                 Header(stringResource(R.string.paste_title), "paste", settings, flow) {
-                    BigButton(stringResource(R.string.paste_close), "paste/close", onClick = { flow.pasteClose() }, icon = R.drawable.ic_close, height = 64.dp, textStyle = PicoTheme.typography.labelLarge)
+                    BigButton(stringResource(R.string.paste_close), "paste/close", onClick = { flow.pasteClose() }, icon = R.drawable.ic_close, height = 64.dp, textStyle = PicoTheme.typography.labelLarge.copy(fontSize = 22.sp))
                 }
                 TextArea(
                     value = p.text,
@@ -236,19 +236,19 @@ private fun PastePage(p: Paste, state: UiState, settings: Settings, flow: CookFl
                     modifier = Modifier.fillMaxWidth().height(if (ringing(state)) 160.dp else 208.dp),
                     placeholder = { Txt(stringResource(R.string.paste_hint), "paste/hint", style = PicoTheme.typography.bodyLarge, color = PicoTheme.colorScheme.labelSecondary, maxLines = 2) },
                 )
-                Txt(stringResource(if (p.error) R.string.paste_err else R.string.paste_rule), "paste/rule", style = PicoTheme.typography.bodyMedium,
+                Txt(stringResource(if (p.error) R.string.paste_err else R.string.paste_rule), "paste/rule", style = PicoTheme.typography.bodyMedium.copy(fontSize = 20.sp),
                     color = if (p.error) ChefColors.Danger else PicoTheme.colorScheme.labelSecondary, modifier = Modifier.fillMaxWidth().height(40.dp), maxLines = 1)
                 if (ringing(state)) AmberBar(state, flow, zh)
                 else BigButton(stringResource(R.string.paste_split), "paste/split", onClick = { flow.pasteSplit() }, modifier = Modifier.fillMaxWidth(), kind = Kind.PRIMARY, enabled = p.text.isNotBlank())
             }
             is Paste.Preview -> {
                 Header(stringResource(R.string.preview_title), "preview", settings, flow) {
-                    BigButton(stringResource(R.string.paste_close), "preview/close", onClick = { flow.pasteClose() }, icon = R.drawable.ic_close, height = 64.dp, textStyle = PicoTheme.typography.labelLarge)
+                    BigButton(stringResource(R.string.paste_close), "preview/close", onClick = { flow.pasteClose() }, icon = R.drawable.ic_close, height = 64.dp, textStyle = PicoTheme.typography.labelLarge.copy(fontSize = 22.sp))
                 }
                 val r = p.recipe
                 Card(W.CARD + W.GAP + W.HEADER) {
-                    Txt(r.title.zh, "preview/name", style = PicoTheme.typography.headlineMedium, color = ChefColors.CardInk, align = TextAlign.Center, maxLines = 1)
-                    Txt(stringResource(R.string.preview_line, r.steps.size, r.timerCount), "preview/line", style = PicoTheme.typography.titleMedium, color = ChefColors.CardInk, align = TextAlign.Center)
+                    Txt(r.title.zh, "preview/name", style = PicoTheme.typography.headlineMedium.copy(fontSize = 36.sp), color = ChefColors.CardInk, align = TextAlign.Center, maxLines = 1)
+                    Txt(stringResource(R.string.preview_line, r.steps.size, r.timerCount), "preview/line", style = PicoTheme.typography.titleMedium.copy(fontSize = 26.sp), color = ChefColors.CardInk, align = TextAlign.Center)
                 }
                 if (ringing(state)) AmberBar(state, flow, zh)
                 else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(W.GAP)) {
@@ -271,7 +271,7 @@ private fun CookPage(state: UiState, settings: Settings, flow: CookFlow, zh: Boo
                 Header(stringResource(R.string.tab_cook), "cook", settings, flow)
                 Card(W.CARD + W.ROW) {
                     Icon(painter = painterResource(R.drawable.ic_menu_book), contentDescription = null, tint = ChefColors.CardInk, modifier = Modifier.size(48.dp))
-                    Txt(stringResource(R.string.cook_empty), "cook/empty", style = PicoTheme.typography.headlineSmall, color = ChefColors.CardInk, align = TextAlign.Center, maxLines = 2)
+                    Txt(stringResource(R.string.cook_empty), "cook/empty", style = PicoTheme.typography.headlineSmall.copy(fontSize = 32.sp, lineHeight = 42.sp), color = ChefColors.CardInk, align = TextAlign.Center, maxLines = 2)
                 }
                 if (ringing(state)) AmberBar(state, flow, zh)
                 else BigButton(stringResource(R.string.cook_go), "cook/go", onClick = { flow.page(Page.RECIPES) }, modifier = Modifier.fillMaxWidth(), icon = R.drawable.ic_menu_book, kind = Kind.PRIMARY)
@@ -279,8 +279,8 @@ private fun CookPage(state: UiState, settings: Settings, flow: CookFlow, zh: Boo
             state.done -> {
                 Header(r.title.of(zh), "done", settings, flow)
                 Card(288.dp) {
-                    Txt(stringResource(R.string.done_big), "done/big", style = PicoTheme.typography.displaySmall, color = ChefColors.CardInk, align = TextAlign.Center)
-                    Txt(stringResource(R.string.done_line, r.title.of(zh), r.minutes), "done/line", style = PicoTheme.typography.bodyLarge, color = ChefColors.CardInk, align = TextAlign.Center, maxLines = 1)
+                    Txt(stringResource(R.string.done_big), "done/big", style = PicoTheme.typography.displaySmall.copy(fontSize = 64.sp), color = ChefColors.CardInk, align = TextAlign.Center)
+                    Txt(stringResource(R.string.done_line, r.title.of(zh), r.minutes), "done/line", style = PicoTheme.typography.bodyLarge.copy(fontSize = 22.sp), color = ChefColors.CardInk, align = TextAlign.Center, maxLines = 1)
                 }
                 if (ringing(state)) AmberBar(state, flow, zh, W.MAIN)
                 else BigButton(stringResource(R.string.done_again), "done/again", onClick = { flow.again() }, modifier = Modifier.fillMaxWidth(), icon = R.drawable.ic_menu_book, kind = Kind.PRIMARY, height = W.MAIN)
@@ -320,7 +320,7 @@ private fun CookPage(state: UiState, settings: Settings, flow: CookFlow, zh: Boo
                     BigButton(
                         stringResource(if (last) R.string.cook_serve else R.string.cook_next), "cook/next", onClick = { flow.next() }, modifier = Modifier.weight(1f),
                         icon = if (last) R.drawable.ic_check else R.drawable.ic_chevron_right, kind = Kind.PRIMARY, height = rowH,
-                        textStyle = PicoTheme.typography.headlineSmall,
+                        textStyle = PicoTheme.typography.headlineSmall.copy(fontSize = 32.sp, lineHeight = 42.sp),
                     )
                 }
             }
@@ -345,7 +345,7 @@ private fun SettingsPage(state: UiState, settings: Settings, flow: CookFlow, zh:
             BigButton(stringResource(R.string.recall), "settings/recall", onClick = { flow.recall() }, modifier = Modifier.weight(1f), icon = R.drawable.ic_my_location, height = 184.dp, stacked = true)
             BigButton(stringResource(R.string.exit), "settings/exit", onClick = { flow.exitAsk() }, modifier = Modifier.weight(1f), icon = R.drawable.ic_logout, height = 184.dp, stacked = true)
         }
-        Txt(stringResource(R.string.version_line, BuildConfig.VERSION_NAME), "settings/version", style = PicoTheme.typography.bodySmall, color = PicoTheme.colorScheme.labelSecondary, modifier = Modifier.height(24.dp))
+        Txt(stringResource(R.string.version_line, BuildConfig.VERSION_NAME), "settings/version", style = PicoTheme.typography.bodySmall.copy(fontSize = 18.sp), color = PicoTheme.colorScheme.labelSecondary, modifier = Modifier.height(24.dp))
     }
 }
 
@@ -355,7 +355,7 @@ private fun ExitPage(state: UiState, settings: Settings, flow: CookFlow) {
         Header(stringResource(R.string.exit), "exit", settings, flow)
         Card(288.dp) {
             Icon(painter = painterResource(R.drawable.ic_logout), contentDescription = null, tint = ChefColors.CardInk, modifier = Modifier.size(44.dp))
-            Txt(stringResource(R.string.exit_q), "exit/q", style = PicoTheme.typography.headlineSmall, color = ChefColors.CardInk, align = TextAlign.Center, maxLines = 2)
+            Txt(stringResource(R.string.exit_q), "exit/q", style = PicoTheme.typography.headlineSmall.copy(fontSize = 32.sp, lineHeight = 42.sp), color = ChefColors.CardInk, align = TextAlign.Center, maxLines = 2)
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(W.GAP)) {
             BigButton(stringResource(R.string.exit_stay), "exit/stay", onClick = { flow.exitCancel() }, modifier = Modifier.weight(1f), height = W.MAIN)

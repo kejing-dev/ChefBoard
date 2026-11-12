@@ -57,7 +57,7 @@ object Layout {
     const val COLLIDER_H = 0.10f
     const val TAG_W = 0.16f
     const val TAG_H = 0.045f
-    const val TAG_GAP = 0.01f
+    const val TAG_GAP = 0.02f
     const val BTN_D = 0.09f
     const val BTN_T = 0.02f
     const val BTN_GAP = 0.04f

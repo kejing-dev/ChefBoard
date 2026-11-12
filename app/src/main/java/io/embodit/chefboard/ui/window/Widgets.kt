@@ -18,6 +18,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pico.spatial.ui.design.Button
 import com.pico.spatial.ui.design.ButtonDefaults
 import com.pico.spatial.ui.design.Icon
@@ -69,7 +70,7 @@ internal fun BigButton(
     enabled: Boolean = true,
     height: Dp = 96.dp,
     stacked: Boolean = false,
-    textStyle: TextStyle = PicoTheme.typography.titleMedium,
+    textStyle: TextStyle = PicoTheme.typography.titleLarge.copy(fontSize = 28.sp, lineHeight = 34.sp),
 ) {
     val (bg, fg) = when (kind) {
         Kind.PRIMARY -> ChefColors.Primary to ChefColors.OnPrimary
@@ -85,13 +86,13 @@ internal fun BigButton(
     ) {
         if (stacked && icon != null) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(painter = painterResource(icon), contentDescription = null, tint = fg, modifier = Modifier.size(36.dp))
+                Icon(painter = painterResource(icon), contentDescription = null, tint = fg, modifier = Modifier.size(44.dp))
                 // design-style: inherited-content-color Button
-                Txt(text, "$tag/button", style = textStyle, color = fg, align = TextAlign.Center)
+                Txt(text, "$tag/button", style = textStyle, color = fg, align = TextAlign.Center, maxLines = 2)
             }
         } else {
             if (icon != null) {
-                Icon(painter = painterResource(icon), contentDescription = null, tint = fg, modifier = Modifier.size(32.dp))
+                Icon(painter = painterResource(icon), contentDescription = null, tint = fg, modifier = Modifier.size(36.dp))
                 Spacer(Modifier.width(12.dp))
             }
             // design-style: inherited-content-color Button
@@ -114,6 +115,6 @@ internal fun MuteKey(muted: Boolean, onClick: () -> Unit) {
         Icon(painter = painterResource(if (muted) R.drawable.ic_volume_off else R.drawable.ic_volume_up), contentDescription = label, tint = fg, modifier = Modifier.size(28.dp))
         Spacer(Modifier.width(8.dp))
         // design-style: inherited-content-color Button
-        Txt(label, "window/mute", style = PicoTheme.typography.labelLarge, color = fg)
+        Txt(label, "window/mute", style = PicoTheme.typography.labelLarge.copy(fontSize = 22.sp), color = fg)
     }
 }

@@ -46,7 +46,7 @@ object Builtin {
         ),
         Recipe(
             "R4", Tr("番茄意面", "Tomato pasta"), Tr("两个锅同时走", "Two pots, one timer each"), 24, "pasta",
-            i("意面" to "pasta", "番茄" to "tomatoes", "蒜" to "garlic", "橄榄油" to "olive oil", "盐" to "salt", "罗勒" to "basil"),
+            i("意面" to "pasta", "番茄" to "tomato", "蒜" to "garlic", "橄榄油" to "oil", "盐" to "salt", "罗勒" to "basil"),
             listOf(
                 s("大锅烧水，水多一点，放一勺盐。", "Big pot of water, plenty, a spoon of salt."),
                 s("番茄切块，蒜拍碎。", "Chop the tomatoes, crush the garlic."),

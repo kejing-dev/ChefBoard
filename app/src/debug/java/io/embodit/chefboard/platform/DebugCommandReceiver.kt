@@ -21,7 +21,7 @@ import io.embodit.chefboard.ui.stage.input.InputSource
  *   adb shell am broadcast -a io.embodit.chefboard.DEBUG -p io.embodit.chefboard --es cmd <cmd> [--es a "<arg>"]
  *
  *   state S00|S01|S02|S03|S04|S05|S05p|S06|S06s|S09|S10|S11  (states[] shortcuts, see AGENTS.md)
- *   page recipes|cook|settings · more · recipe R4 [pageIndex] · step N · next · prev · finish · again
+ *   page recipes|cook|settings · more · recipe R4 [stepNo] · step N (stepNo, 0 = prep) · next · prev · finish · again
  *   stage SEC (the cook page [⏱] path with SEC seconds) · cancel · tap plus1|plus5|clear|pplus1|back|plate|timer N|spot N
  *   timers N (N timers placed on rings 1,3,0,4 running) · pause SLOT · ring SLOT · stop (amber bar) · freeze on|off
  *   paste sample|<text> · split · save · edit · pasteclose · mute on|off · volume 0-2 · lang zh|en|system
@@ -52,12 +52,12 @@ class DebugCommandReceiver : BroadcastReceiver() {
             flow.tick()
         }
         when (cmd) {
-            "state" -> when (a.uppercase()) {
+            "state" -> when (p.getOrNull(0)?.uppercase() ?: "") {
                 "S00" -> { scene?.forceLoading = true; graph.window.closeOnly("debug S00") }
                 "S01" -> { scene?.forceLoading = false; flow.page(Page.RECIPES); flow.pasteClose() }
                 "S02" -> { flow.openPaste() }
-                "S03" -> { flow.openRecipe("R4"); flow.gotoStep(3) }
-                "S04" -> { flow.openRecipe("R4"); flow.gotoStep(3); flow.stepTimerButton() }
+                "S03" -> { flow.openRecipe("R4"); flow.gotoStepNo(n(1) ?: 3) }
+                "S04" -> { flow.openRecipe("R4"); flow.gotoStepNo(3); flow.stepTimerButton() }
                 "S05" -> placeTimers(2)
                 "S05P" -> { placeTimers(2); tap(Hit.TimerHit(0)) }
                 "S06", "S07" -> { placeTimers(1); board.expire(0); flow.tick() }
@@ -69,8 +69,8 @@ class DebugCommandReceiver : BroadcastReceiver() {
             }
             "page" -> flow.page(when (a) { "cook" -> Page.COOK; "settings" -> Page.SETTINGS; else -> Page.RECIPES })
             "more" -> flow.more()
-            "recipe" -> { flow.openRecipe(p.getOrNull(0) ?: "R4"); n(1)?.let { flow.gotoStep(it) } }
-            "step" -> flow.gotoStep(n(0) ?: 0)
+            "recipe" -> { flow.openRecipe(p.getOrNull(0) ?: "R4"); n(1)?.let { flow.gotoStepNo(it) } }
+            "step" -> flow.gotoStepNo(n(0) ?: 0)
             "next" -> flow.next()
             "prev" -> flow.prev()
             "finish" -> { flow.gotoStep(99); flow.next() }

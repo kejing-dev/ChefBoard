@@ -134,6 +134,9 @@ class CookFlow(private val fx: FlowEffects) {
     /** S09 [换一道]. */
     fun again() { fx.uiClick(); set { it.copy(done = false, recipeId = null, pageIndex = 0, page = Page.RECIPES, gridPage = 0) } }
 
+    /** Jump to real step [n] (1-based, prep = 0) whatever the number of prep pages. */
+    fun gotoStepNo(n: Int) { val i = pages.indexOfFirst { it.stepNo == n }; if (i >= 0) gotoStep(i) }
+
     fun gotoStep(index: Int) { if (pages.isNotEmpty()) set { it.copy(pageIndex = index.coerceIn(0, pages.size - 1), done = false, page = Page.COOK) } }
 
     // ------------------------------------------------------------------ paste (S02)

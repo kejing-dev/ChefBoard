@@ -293,7 +293,7 @@ class StageScene(private val graph: Graph, private val context: Context) {
             model(r.bodyHigh, r.glaze, "bodyHigh:$s", vis)
             model(r.bezel, r.cream, "bezel:$s", vis)
             dials += model(r.dial, r.dialMat, "dial:$s", vis, Vec3(0f, SceneRes.BEZEL_TOP + 0.0006f, 0f))
-            val am = SceneRes.pbr(Pal.DOTS[s], 0.45f).also { r.keep(it) }
+            val am = SceneRes.pbr(Pal.ARCS[s], 0.45f).also { r.keep(it) }
             arcMats += am
             arcs += holder("arcHolder:$s", vis, Vec3(0f, SceneRes.BEZEL_TOP + 0.0009f, 0f))
             model(r.pointer, r.ink, "pointer:$s", vis, Vec3(0f, SceneRes.BEZEL_TOP + 0.0015f, SceneRes.DIAL_OUT - 0.004f))
@@ -580,7 +580,7 @@ class StageScene(private val graph: Graph, private val context: Context) {
         val c = when (t.state) {
             TState.PAUSED -> Pal.GREY
             TState.RINGING -> Pal.AMBER
-            else -> Pal.DOTS[s]
+            else -> Pal.ARCS[s]
         }
         arcMats[s].setBaseColor(c.c4(1f))
         if (t.state == TState.RINGING) {

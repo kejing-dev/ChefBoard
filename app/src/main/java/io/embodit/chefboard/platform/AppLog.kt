@@ -2,7 +2,7 @@ package io.embodit.chefboard.platform
 
 import android.util.Log
 
-const val TAG = "BeatPad"
+const val TAG = "ChefBoard"
 
 /**
  * One line per event under the tag `BeatPad` with stable prefixes (verification.debugHooks): STATE MEASURE CHIP

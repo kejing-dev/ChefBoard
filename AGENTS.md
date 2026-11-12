@@ -1,66 +1,59 @@
-# BeatPad 节奏鼓台 · io.embodit.beatpad
+# ChefBoard 大厨看板 · io.embodit.chefboard
 
-Full Space (Stage · Mixed passthrough) drum deck for PICO OS 6 (SDK BOM 6.1.9): a curved walnut deck with 8 pads in front
-of you, controllers are the sticks (swing speed = loudness), hands and pointing also work; every hit you record lands
-on a 16-step beat ring behind the deck and loops. Design package: factory `apps/beat-pad/design-package.json` (gate B
-2026-11-12: G4 Full Space, G1 scoring → v2, G2 passthrough only, G3 procedural PBR). Started from spatial-calc
-(Stage + one Planar window + LevelGate + board-input template); controller code after pruning-class / qubic-tower.
+Full Space (Stage · Mixed passthrough) kitchen timers for PICO OS 6 (SDK BOM 6.1.9): a walnut rack with four ceramic
+3D timers sits to the right of a recipe window. Look at a timer and pinch → it floats up (5:00, or the step's time);
+look at one of five rings on the counter and pinch → it flies there and starts. Pinch it to pause, [+1] / [收回] when
+paused; at zero it shakes, pulses amber and rings at its own position; an amber bar in the window stops it without
+turning round. Eye + pinch only (no drag / twist / stick). Design package: factory `apps/chef-board/design-package.json`
+(r2, gate B 2026-11-12). Started from beat-pad (Stage + one Planar window + LevelGate + board-input template).
 
 ## Structure
 
 ```
-Main.kt                     DefaultStage (Mixed) + one Planar WindowContainer "BeatMain" 440 × 540 dp
-domain/beat/Model.kt        Pattern (8 pads × 16 steps, 0–3), kits + names, 6 grooves, SavedBeat, constants
-domain/beat/Timing.kt       Tempo / quantise, HubDrag (1 cm = 2 BPM, snaps 80/100/120), RingDrag (0.35-slot hysteresis), HitCurve
-domain/beat/StickHit.kt     StrikeDetector: tip crosses a pad face from above, interpolated time, rearm 1.5 cm, 50 ms
-domain/beat/Layout.kt       spatialLayout in deck-local metres (pads, ring, rec key, labels), reach, window-side yaw
-domain/place/Arrange.kt     THE placement function: cold start, every window open (reopen / HUD / recall), [回到面前], panel side
-domain/place/HeadSample.kt  D29 sampler: after [回到面前] wait for a turn away from the button + still + level
-domain/beat/BeatFlow.kt     the whole state machine D0–D7 × P1–P5; every input (window, 3D keys, sticks, debug) calls it
-platform/audio/Mixer.kt     own low-latency mixer + sequencer (24 voices, choke, pan, limiter, count-in, quantise, R1-05b guard)
-platform/audio/AudioEngine  AudioTrack LOW_LATENCY + SPATIALIZATION_BEHAVIOR_NEVER, URGENT_AUDIO thread, LATENCY log, decode
-platform/input/Trackers.kt  Controllers (poses, A/X B/Y edges, stick x) · Hands (index tip / palm)
-platform/Platform.kt        Graph (process store), storage (files/beats.json, prefs), import → files/imports/*.wav
-platform/ImportActivity     system document picker host (T13)
-ui/stage/StageScene.kt      deck, pads, labels, ring, stones, lanes, knob, playhead, rec key, sticks, rays, fly stones, HUD
-ui/stage/Meshes.kt          lathe / torus / deck-body / disc meshes (all round parts ≥ 24 segments)
-ui/stage/Textures.kt        procedural walnut / brushed aluminium, text plates for 3D words
-ui/stage/input/BoardInput   factory board-input template (tap + drag + hover, names → targets)
-ui/window/MainWindowUi.kt   native TabBar 演奏 / 节拍库 / 设置 (+ sub pages), D6 place page, D7 pick page
+Main.kt                     DefaultStage (Mixed) + one Planar WindowContainer "ChefMain" 640 × 560 dp
+domain/place/Layout.kt      design spatialLayout in the kitchen frame (eye origin, −Z = stove): window az −20°, rack +22° 0.9 m,
+                            rings −36…+36° at 0.70 m / eye −0.68 m, stage point, tag / button rows, D35 boxes
+domain/place/Arrange.kt     THE placement function: cold start, every window open, [叫回面前]
+domain/place/LevelGate.kt   D9 level gate + ChefBoard's yaw target (window opens while the user glances at az −20°)
+domain/place/HeadSample.kt  D29 sampler for [叫回面前] (face the stove, hold still)
+domain/timer/Timers.kt      TimerBoard: docked → staged → flying → running ⇄ paused → ringing → stopped → returning; all globalRules
+domain/recipe/*             8 built-in recipes (zh / en), CookPages (prep pages + steps), Parser (paste → steps + times)
+domain/cook/CookFlow.kt     page layer S00–S11 + settings; every input (window, 3D taps, debug) calls it
+platform/Platform.kt        Graph (process store), sounds (Ev → mixer / spatial bell), storage (prefs + files/recipes.json), debug clock freeze
+platform/audio/*            AudioTrack + small mixer (variants, ±5 % pitch, one instance per kind, pan, −1 dBFS limiter)
+ui/stage/StageScene.kt      rack, timers (lathe body, bezel, rotating dial, progress arc), tags, 3D buttons, rings, arrow, HUD
+ui/stage/input/BoardInput   factory board-input template (tap + hover, names → targets)
+ui/window/MainWindowUi.kt   native TabBar 菜谱 / 做菜 / 设置, paste card, result card, exit confirm, amber bar
 app/src/debug               DebugCommandReceiver
-tools/build_sounds.py       how assets/sounds/*.wav were made from ~/Downloads/cc0-sounds (Kenney CC0)
+tools/build_sounds.py       assets/sounds/*.wav from ~/Downloads/cc0-sounds (Kenney CC0)
+tools/loudness.py           offline loudness evidence (rendered with the app's gains)
+tools/build_icon.py         512 px launcher icon PNG
 ```
 
 ## Debug broadcast
 
-`adb shell am broadcast -a io.embodit.beatpad.DEBUG -p io.embodit.beatpad --es cmd <cmd> --es a "<arg>"`
-Logs: tag `BeatPad` (also files/input-log.txt: `adb shell run-as io.embodit.beatpad cat files/input-log.txt`), prefixes
-STATE HIT STRIKE REC PLAY SLOT DRAG DROP BPM LOAD SAVE KIT PICK IMPORT PLACE DIAG LATENCY AUDIO WINDOW PAGE CMD DUMP OVERFLOW.
+`adb shell am broadcast -a io.embodit.chefboard.DEBUG -p io.embodit.chefboard --es cmd <cmd> --es a "<arg>"`
+Logs: tag `ChefBoard` (also `adb shell run-as io.embodit.chefboard cat files/input-log.txt`), prefixes STATE PAGE TIMER
+TAP3D BELL PLACE WINDOW HUD DIAG CMD DUMP WHERE OVERFLOW LINES SOUND LANG PASTE FREEZE EXIT.
 
 | cmd | what |
 |---|---|
-| `tap` `pad N` / `slot N` / `hub` / `rec` | pointer tap (N from 1) — same path as a system tap |
-| `hit` `N VEL` | a stick strike on pad N (0–1) at the frame being heard (records when recording) |
-| `drag` `stone N TO` / `stone N off` / `hub CM` | drag a stone of the focus pad (append `hold` to keep D5 on screen, `drag end` to drop) / turn the knob |
-| `rec` · `play` · `stop` · `undo` · `key A|B|X|Y` | transport (A/X = record, B/Y = play/stop) |
-| `groove ID` · `card N` · `load` · `save` · `confirm overwrite|clear|load|cancel` | library (ids: garage friday corner dancefloor beach rainy; card 0 blank, 1–6 grooves, 7–18 my slots) |
-| `kit acoustic|electronic|hand` · `bpm N` · `metro 0|1|2` · `volume 0-2` · `mute on|off` · `lang zh|en|system` | settings |
-| `page play|library|settings` · `sub none|sound|kit|padsound|more|about` | window pages |
-| `place` · `turn ±DEG` · `stick X` · `front` · `side left|right` · `placedone` | D6 |
-| `pick` · `pickpad N` · `import PATH` · `importdrop` · `importui` · `pickend` | D7 / T13 (`importdrop` = newest file in Android/data/io.embodit.beatpad/files/Music) |
-| `hold Dn` / `unhold` | freeze animation time and the count-in (D2 stays on its number) for screenshots of short states (D2, D3 flying stones) |
-| `fly N S1,S2…` | launch flying stones from pad N to steps (picture of D3) |
-| `notice NAME [ARG]` | show a window notice (IMPORT_OK "kick|1.2", IMPORT_FAIL, IMPORT_LONG, SAVED, FULL …) |
-| `exitask` · `closewindow` · `recall` · `wipe` · `dump` | misc (`recall` = settings [叫回面前]: close + level-gated reopen ahead of the head; the deck turns aside via `Arrange.onWindowOpen`) |
+| `state S00…S11` | jump to a design state (S04 = R4 step 3 + [⏱ 10 分]; S05 = 2 timers on rings −18° / +18°; S05p = + pause timer 1; S06 / S07 = timer 1 rings; S06s = rings, stopped, clock frozen on「好了 ✓」) |
+| `page recipes\|cook\|settings` · `more` · `recipe R4 [pageIndex]` · `step N` · `next` · `prev` · `finish` · `again` | page layer |
+| `stage SEC` · `cancel` · `tap plus1\|plus5\|clear\|pplus1\|back\|plate\|timer N\|spot N` | timer layer, same path as a pinch (N from 0) |
+| `timers N` · `pause SLOT` · `ring SLOT` · `stop` | QA shortcuts (only the time is set; transitions are the real ones) |
+| `freeze on\|off` | the app clock stands still (timers, flights, bells, animations) for short states |
+| `paste sample\|<text>` · `split` · `save` · `edit` · `pasteclose` | S02 |
+| `mute on\|off` · `volume 0-2` · `lang zh\|en\|system` · `recall` · `exitask` · `exitcancel` · `exit` | settings |
+| `closewindow` · `openwindow` · `wipe` · `dump` · `where` | misc (`where` = world positions of rack / rings / timers) |
 
 ## Screenshot list for QA (design states[])
 
-D0 (cold start < 0.5 s) · D1 empty + coach / D1 with「车库排练」(zh, en) · D2 (`rec`, `hold D2`) · D3 (`rec`, hits, `fly`,
-`hold D3`) · D4 (`play`) · D5 (`drag stone 1 4 hold`, `drag stone 1 off hold`) · D6 (`place`, zh/en) · D7 (`pick`) ·
-P1 in D1/D3/D4 · P2 blank / groove / empty slot / my slot + overwrite confirm · P3 home + sound / kit / pad sound / more /
-about (zh, en) · P4 exit confirm, slot confirm · P5 import ok / fail / too long (`notice …`).
+S00 (cold start, or `state S00`) · S01 zh / en (first start shows「捏我计时」3 s) · S02 input + preview (`paste sample`, `split`) ·
+S03 R4 step 3 / step 1 / prep / en step 3 · S04 (`state S04`, then `tap plus5`) · S05 (`state S05`, turn the head: they stay) ·
+S05p · S06 (`state S06`, record 3 s) · S06s · S07 (`state S07` + turn the emulator camera 120°) · S09 · S10 zh / en · S11.
+Window = camera reset; the rack and rings are to the right / below (turn the camera right ~25° and down ~30°).
 
 ## Build
 
-`JAVA_HOME=~/.pico/primer-cli/jdk/jdk-21.0.13+9/Contents/Home ./gradlew :app:testDebugUnitTest :app:assembleDebug`
-Unit tests also render `app/build/beatpad-qa/` (loudness, solos per kit, 6 grooves × 30 s) through the app mixer.
+`JAVA_HOME=~/.pico/primer-cli/jdk/jdk-21.0.13+9/Contents/Home ./gradlew :app:assembleDebug :app:testDebugUnitTest`

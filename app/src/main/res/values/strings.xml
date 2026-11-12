@@ -31,7 +31,7 @@
     <string name="lang_btn">中文 / EN</string>
     <string name="recall">Bring back to front</string>
     <string name="exit">Exit</string>
-    <string name="version_line">v%1$s · recipes written for this app · CC0 sounds</string>
+    <string name="version_line">v%1$s · own recipes · CC0 sounds</string>
     <string name="exit_q">Leaving? Running timers will stop.</string>
     <string name="exit_stay">Stay</string>
     <string name="exit_go">Exit</string>

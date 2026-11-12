@@ -18,7 +18,7 @@ class LevelGate(
     val dwellMs: Long = 300L,
     val noHeadMs: Long = 5000L,
     val yawTolDeg: Float = Arrange.GATE_TOL_DEG,
-    val targetTimeoutMs: Long = 6000L,
+    val targetTimeoutMs: Long = 8000L,
 ) {
     var pending: String? = null; private set
     var target: Float? = null; private set

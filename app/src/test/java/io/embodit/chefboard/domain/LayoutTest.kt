@@ -114,7 +114,7 @@ class LayoutTest {
         }
     }
 
-    /** D9 + window target: level for 300 ms AND facing the target (±6°); target dropped after 6 s; no head 5 s → open. */
+    /** D9 + window target: level for 300 ms AND facing the target (±6°); target dropped after 8 s; no head 5 s → open. */
     @Test fun levelGateWithTarget() {
         val g = LevelGate()
         g.ask("start", 0L, 20f)
@@ -127,8 +127,8 @@ class LayoutTest {
         // timeout: the target is dropped after 6 s
         g.ask("plate", 10_000L, 20f)
         assertNull(g.step(12_000, 0f, -60f))
-        assertNull(g.step(16_100, 0f, -60f))
-        assertEquals("plate/notarget", g.step(16_500, 0f, -60f))
+        assertNull(g.step(18_100, 0f, -60f))
+        assertEquals("plate/notarget", g.step(18_500, 0f, -60f))
         // no head pose
         g.ask("x", 20_000L)
         assertNull(g.step(20_000, null)); assertEquals("x/nohead", g.step(25_100, null))

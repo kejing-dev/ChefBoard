@@ -98,8 +98,8 @@ class Graph(private val context: Context) {
         audio.mixer.master = if (s.muted) 0f else Settings.VOLUME_PERCENT[s.volume.coerceIn(0, 2)] / 100f
     }
 
-    /** Linear volume the bell plays at (0 when muted). */
-    val bellVolume: Float get() = flow.settings.value.let { if (it.muted) 0f else Settings.VOLUME_PERCENT[it.volume.coerceIn(0, 2)] / 100f }
+    /** Linear volume the bell plays at on the entity (0 when muted): volume stop × [BELL_GAIN], ≤ 1. */
+    val bellVolume: Float get() = flow.settings.value.let { if (it.muted) 0f else (Settings.VOLUME_PERCENT[it.volume.coerceIn(0, 2)] / 100f * BELL_GAIN).coerceAtMost(1f) }
 
     private fun play(kind: String, gain: Float, pan: Float) { audio.mixer.play(kind, gain, pan) }
 
@@ -107,14 +107,14 @@ class Graph(private val context: Context) {
 
     private fun sound(ev: Ev) {
         when (ev) {
-            is Ev.Tick -> play("tick", 0.45f, pan(ev.slot))                     // 咔 −18 dB class: short, light
-            is Ev.Landed -> { play("wood", 0.60f, pan(ev.slot)); play("click", 0.70f, pan(ev.slot)) } // 笃 + 嗒 on the landing frame
-            is Ev.Docked -> play("wood", 0.55f, pan(ev.slot))                    // 笃 back in the rack
+            is Ev.Tick -> play("tick", 0.55f, pan(ev.slot))                     // 咔 −18 dB class: short, light
+            is Ev.Landed -> { play("wood", 0.70f, pan(ev.slot)); play("click", 0.75f, pan(ev.slot)) } // 笃 + 嗒 on the landing frame
+            is Ev.Docked -> play("wood", 0.65f, pan(ev.slot))                    // 笃 back in the rack
             is Ev.Paused, is Ev.Resumed -> play("click", 0.55f, pan(slotOf(ev)))
             is Ev.Refused -> play("tick", 0.40f, 0f)
             is Ev.Bell -> {
                 val spatial = runCatching { spatialBell?.invoke(ev.slot, bellVolume) }.getOrNull() == true
-                if (!spatial) play("bell", 1.0f, pan(ev.slot))
+                if (!spatial) play("bell", BELL_GAIN, pan(ev.slot))
                 AppLog.i("BELL slot=${ev.slot} played ${if (spatial) "spatial" else "stereo pan=${"%.2f".format(pan(ev.slot))}"} volume=$bellVolume")
             }
             else -> Unit
@@ -173,6 +173,8 @@ class Graph(private val context: Context) {
     }
 
     companion object {
+        /** Bell gain over the volume stop: at 中 (70 %) the bell peaks ≈ −2.2 dBFS, voiced RMS ≈ −19 dBFS (qa/loudness-v0.1.0.wav). */
+        const val BELL_GAIN = 1.25f
         fun from(context: Context): Graph = (context.applicationContext as SpatialApplication).graph
     }
 }

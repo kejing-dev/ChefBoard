@@ -31,7 +31,7 @@ data class CookPage(val text: Tr, val stepNo: Int, val prepPart: Int = 0, val pr
 object CookPages {
     /** Characters that fit in two lines of the 40 sp sentence (content.stepRule: 中文 ≤ 28 字、英文 ≤ 50 字符). */
     const val ZH_MAX = 26
-    const val EN_MAX = 48
+    const val EN_MAX = 50
 
     fun of(r: Recipe): List<CookPage> {
         val prep = prepPages(r)

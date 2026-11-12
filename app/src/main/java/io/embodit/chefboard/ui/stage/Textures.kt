@@ -99,7 +99,7 @@ internal object Textures {
             val dx = kotlin.math.sin(a).toFloat(); val dy = kotlin.math.cos(a).toFloat()
             val long = m % 5 == 0
             val r1 = outer * k * 0.985f; val r0 = (if (long) outer - (outer - inner) * 0.30f else outer - (outer - inner) * 0.16f) * k
-            p.strokeWidth = if (long) size * 0.006f else size * 0.003f
+            p.strokeWidth = if (long) size * 0.009f else size * 0.005f
             c.drawLine(cx + dx * r0, cy + dy * r0, cx + dx * r1, cy + dy * r1, p)
             if (long) {
                 val rt = (inner + (outer - inner) * 0.36f) * k

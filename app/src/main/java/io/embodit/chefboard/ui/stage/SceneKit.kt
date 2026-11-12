@@ -50,6 +50,8 @@ internal object Pal {
     val WELL = hex(0x3E2A1D); val DASH = hex(0xD9CBB0)
     /** The four colour dots: tomato red / sage green / mustard / mist blue (E2). */
     val DOTS = listOf(hex(0xD2533F), hex(0x8FA58A), hex(0xD8B04A), hex(0x8AA3BE))
+    /** Progress-arc colours: the dot colours, deeper so the 7 mm arc reads on the cream bezel at 1 m. */
+    val ARCS = listOf(hex(0xB8321F), hex(0x4E8A45), hex(0xC98F10), hex(0x3F72A8))
 }
 
 /**
@@ -81,7 +83,7 @@ internal class SceneRes private constructor() {
     lateinit var arcGrey: PhysicallyBasedMaterial
 
     companion object {
-        const val ARC_IN = 0.0474f
+        const val ARC_IN = 0.0458f
         const val ARC_OUT = 0.0532f
         const val DIAL_OUT = 0.0600f
         /** Bezel top (timer base = 0): the dial and the arc lie on it. */
