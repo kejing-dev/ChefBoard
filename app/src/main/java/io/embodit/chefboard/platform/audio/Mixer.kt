@@ -25,6 +25,8 @@ class Mixer(val sr: Int = 48000, seed: Long = 7L) {
 
     private class Voice(val kind: String, val data: FloatArray, val rate: Double, val gl: Float, val gr: Float) {
         var pos = 0.0; var fadeLeft = -1; var fadeLen = 1
+        /** Set when the voice has run past its data or its cut-fade has ended; the render loop removes it. */
+        var done = false
     }
 
     private val voices = ArrayList<Voice>()
@@ -61,15 +63,20 @@ class Mixer(val sr: Int = 48000, seed: Long = 7L) {
         while (it.hasNext()) {
             val v = it.next()
             var f = 0
-            while (f < frames) {
+            while (!v.done && f < frames) {
                 val p = v.pos.toInt()
-                if (p + 1 >= v.data.size) break
+                if (p < 0 || p + 1 >= v.data.size) { v.done = true; break }
                 var s = (v.data[p] + (v.data[p + 1] - v.data[p]) * (v.pos - p)).toFloat()
-                if (v.fadeLeft >= 0) { s *= v.fadeLeft.toFloat() / v.fadeLen; v.fadeLeft--; if (v.fadeLeft < 0) { v.pos = Double.MAX_VALUE / 4; break } }
+                if (v.fadeLeft >= 0) {
+                    s *= v.fadeLeft.toFloat() / v.fadeLen; v.fadeLeft--
+                    // q3-1: the cut-fade has ended → drop the voice outright (it used to park pos at Double.MAX_VALUE / 4,
+                    // whose toInt() is Int.MAX_VALUE, so `p + 1` overflowed past the bounds check → AIOOBE index=2147483647).
+                    if (v.fadeLeft < 0) v.done = true
+                }
                 out[f * 2] += s * v.gl; out[f * 2 + 1] += s * v.gr
                 v.pos += v.rate; f++
             }
-            if (v.pos.toInt() + 1 >= v.data.size) it.remove()
+            if (v.done || v.pos.toInt() + 1 >= v.data.size) it.remove()
         }
         // master + soft limiter (attack instant, release ~80 ms) to a −1 dBFS ceiling
         val ceil = LIMIT

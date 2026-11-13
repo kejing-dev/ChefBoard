@@ -14,6 +14,7 @@ import io.embodit.chefboard.domain.recipe.Recipe
 import io.embodit.chefboard.domain.timer.Ev
 import io.embodit.chefboard.mainApp
 import io.embodit.chefboard.platform.audio.AudioEngine
+import io.embodit.chefboard.platform.audio.SoundCues
 import io.embodit.chefboard.ui.stage.input.BoardInputLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -107,21 +108,14 @@ class Graph(private val context: Context) {
 
     private fun sound(ev: Ev) {
         when (ev) {
-            is Ev.Tick -> play("tick", 0.55f, pan(ev.slot))                     // 咔 −18 dB class: short, light
-            is Ev.Landed -> { play("wood", 0.70f, pan(ev.slot)); play("click", 0.75f, pan(ev.slot)) } // 笃 + 嗒 on the landing frame
-            is Ev.Docked -> play("wood", 0.65f, pan(ev.slot))                    // 笃 back in the rack
-            is Ev.Paused, is Ev.Resumed -> play("click", 0.55f, pan(slotOf(ev)))
-            is Ev.Refused -> play("tick", 0.40f, 0f)
             is Ev.Bell -> {
                 val spatial = runCatching { spatialBell?.invoke(ev.slot, bellVolume) }.getOrNull() == true
                 if (!spatial) play("bell", BELL_GAIN, pan(ev.slot))
                 AppLog.i("BELL slot=${ev.slot} played ${if (spatial) "spatial" else "stereo pan=${"%.2f".format(pan(ev.slot))}"} volume=$bellVolume")
             }
-            else -> Unit
+            else -> SoundCues.of(ev).forEach { c -> play(c.kind, c.gain, c.slot?.let { pan(it) } ?: 0f) }
         }
     }
-
-    private fun slotOf(ev: Ev): Int = when (ev) { is Ev.Paused -> ev.slot; is Ev.Resumed -> ev.slot; else -> 0 }
 
     // ------------------------------------------------------------------ storage
 
