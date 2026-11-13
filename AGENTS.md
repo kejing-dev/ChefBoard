@@ -5,7 +5,7 @@ Full Space (Stage · Mixed passthrough) kitchen timers for PICO OS 6 (SDK BOM 6.
 look at one of five rings on the counter and pinch → it flies there and starts. Pinch it to pause, [+1] / [收回] when
 paused; at zero it shakes, pulses amber and rings at its own position; an amber bar in the window stops it without
 turning round. Eye + pinch only (no drag / twist / stick). Design package: factory `apps/chef-board/design-package.json`
-(r2, gate B 2026-11-12). Started from beat-pad (Stage + one Planar window + LevelGate + board-input template).
+(r2, gate B 2026-11-12). Built on the factory Stage template (Stage + one Planar window + LevelGate + board-input).
 
 ## Structure
 
