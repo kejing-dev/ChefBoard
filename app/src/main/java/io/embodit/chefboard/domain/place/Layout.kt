@@ -167,6 +167,49 @@ object Layout {
         return upright(b + Vec3(0f, top / 2f, 0f), 0.22f / 2f, top / 2f, RING_D / 2f)
     }
 
+    // ---- step food E7 (v0.1.4, 门 C「每一步都要有实体的食物模型」): real-size Tripo food on the counter, behind the drop
+    // rings and below the window (the window is at az −20°; its caption bar ends ~19° below the eye, the food's tallest top
+    // is ~24° below), left of the rack's left end (az ≈ 1°), so it never covers the window, the rack, a timer or a 3D button.
+    const val FOOD_AZ = -18f
+    const val FOOD_DIST = 0.95f
+    const val FOOD_Y = SPOT_Y
+    const val FOOD_GAP = 0.035f
+    /** A row longer than this wraps into a second row [FOOD_ROW2] further back (prep pages with 5–6 ingredients). */
+    const val FOOD_ROW_MAX = 0.62f
+    const val FOOD_ROW2 = 0.20f
+
+    /** Footprint of a calibrated model: width along the row, depth toward the eye, height. */
+    data class Foot(val w: Float, val d: Float, val h: Float)
+
+    /**
+     * Kitchen-frame bottom centres of [feet] laid out left → right in rows centred on az [FOOD_AZ] (first row at
+     * [FOOD_DIST], overflow [FOOD_ROW2] behind, tallest models in the front row), every row facing the eye.
+     */
+    fun foodSpots(feet: List<Foot>): List<Vec3> {
+        // tallest first, first-fit: tall bottles stay in the front row (closer = lower in the view, so the back row's
+        // tops never climb into the window); each row then keeps the recipe order left → right
+        val rows = ArrayList<ArrayList<Int>>()
+        val widths = ArrayList<Float>()
+        for (i in feet.indices.sortedByDescending { feet[it].h }) {
+            val f = feet[i]
+            val r = widths.indices.firstOrNull { widths[it] + FOOD_GAP + f.w <= FOOD_ROW_MAX }
+            if (r == null) { rows += arrayListOf(i); widths += f.w } else { rows[r] += i; widths[r] += FOOD_GAP + f.w }
+        }
+        rows.forEach { it.sort() }
+        val out = arrayOfNulls<Vec3>(feet.size)
+        rows.forEachIndexed { r, idx ->
+            val c = dir(FOOD_AZ) * (FOOD_DIST + r * FOOD_ROW2) + Vec3(0f, FOOD_Y, 0f)
+            val right = facingRight(c)
+            val total = idx.sumOf { feet[it].w.toDouble() }.toFloat() + FOOD_GAP * (idx.size - 1)
+            var x = -total / 2f
+            for (i in idx) { out[i] = c + right * (x + feet[i].w / 2f); x += feet[i].w + FOOD_GAP }
+        }
+        return out.map { it!! }
+    }
+
+    /** The upright box of a food model standing at [base] (D35 test). */
+    fun foodBox(base: Vec3, f: Foot): Box = upright(base + Vec3(0f, f.h / 2f, 0f), f.w / 2f, f.h / 2f, f.d / 2f)
+
     /** Angular size (deg) of a target of size [m] at distance [d]. */
     fun angleDeg(m: Float, d: Float): Float = Math.toDegrees(2 * kotlin.math.atan((m / 2f / d).toDouble())).toFloat()
 

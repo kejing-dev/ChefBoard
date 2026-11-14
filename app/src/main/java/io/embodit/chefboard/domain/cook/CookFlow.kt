@@ -41,6 +41,8 @@ data class UiState(
     val pageIndex: Int = 0,
     val done: Boolean = false,
     val exitAsk: Boolean = false,
+    /** v0.1.4 how-to page inside 设置 (ui_gates how-to, profile B19). */
+    val howTo: Boolean = false,
     val timers: TimerView = TimerView(),
     val pasted: List<Recipe> = emptyList(),
 ) {
@@ -52,6 +54,7 @@ data class UiState(
         page == Page.COOK && done -> "S09"
         page == Page.COOK -> "S03"
         exitAsk -> "S11"
+        howTo -> "S10h"
         else -> "S10"
     }
 }
@@ -109,7 +112,7 @@ class CookFlow(private val fx: FlowEffects) {
     val gridPageCount: Int get() = (gridCells().size + CARDS_PER_PAGE - 1) / CARDS_PER_PAGE
     fun gridPageCells(page: Int = s.gridPage): List<String?> = gridCells().drop(page * CARDS_PER_PAGE).take(CARDS_PER_PAGE)
 
-    fun page(p: Page) { fx.uiClick(); set { it.copy(page = p, exitAsk = false) } }
+    fun page(p: Page) { fx.uiClick(); set { it.copy(page = p, exitAsk = false, howTo = false) } }
 
     fun more() { fx.uiClick(); set { it.copy(gridPage = (it.gridPage + 1) % gridPageCount) } }
 
@@ -176,7 +179,9 @@ class CookFlow(private val fx: FlowEffects) {
     fun firstRunShown() { if (!_settings.value.firstRunDone) { val n = _settings.value.copy(firstRunDone = true); _settings.value = n; fx.saveSettings(n) } }
 
     fun recall() { fx.uiClick(); fx.recall() }
-    fun exitAsk() { fx.uiClick(); set { it.copy(page = Page.SETTINGS, exitAsk = true) } }
+    fun exitAsk() { fx.uiClick(); set { it.copy(page = Page.SETTINGS, exitAsk = true, howTo = false) } }
+    fun howToOpen() { fx.uiClick(); set { it.copy(page = Page.SETTINGS, howTo = true, exitAsk = false) } }
+    fun howToClose() { fx.uiClick(); set { it.copy(howTo = false) } }
     fun exitCancel() { fx.uiClick(); set { it.copy(exitAsk = false) } }
     fun exitConfirm() { fx.log("EXIT confirm"); board.reset(); fx.exit() }
 

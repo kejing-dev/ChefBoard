@@ -60,4 +60,14 @@
     <string name="btn_clear">清零</string>
     <string name="btn_back">收回</string>
     <string name="plate_name">大厨看板</string>
+    <string name="how_to_title">怎么操作</string>
+    <string name="how_to_pick">看着架上的计时器，捏一下</string>
+    <string name="how_to_pick_pad">手柄：指着它，按扳机</string>
+    <string name="how_to_place">再看锅边的圈，捏一下，就开始走</string>
+    <string name="how_to_place_pad">手柄：指着圈，按扳机</string>
+    <string name="how_to_time">捏 +1 / +5 加时间，捏清零重来</string>
+    <string name="how_to_time_pad">手柄：指着大钮，按扳机</string>
+    <string name="how_to_stop">响了就捏它，或点窗口里的琥珀条</string>
+    <string name="how_to_stop_pad">手柄：指着它按扳机，或点琥珀条</string>
+    <string name="how_to_back">返回</string>
 </resources>

@@ -106,7 +106,11 @@ fun MainWindowUi() {
         when (state.page) {
             Page.RECIPES -> if (state.paste != null) PastePage(state.paste!!, state, settings, flow, zh) else RecipesPage(state, settings, flow, zh)
             Page.COOK -> CookPage(state, settings, flow, zh)
-            Page.SETTINGS -> if (state.exitAsk) ExitPage(state, settings, flow) else SettingsPage(state, settings, flow, zh)
+            Page.SETTINGS -> when {
+                state.exitAsk -> ExitPage(state, settings, flow)
+                state.howTo -> HowToPage(settings, flow)
+                else -> SettingsPage(state, settings, flow, zh)
+            }
         }
     }
 
@@ -336,17 +340,50 @@ private fun SettingsPage(state: UiState, settings: Settings, flow: CookFlow, zh:
     val volName = stringResource(listOf(R.string.vol_low, R.string.vol_mid, R.string.vol_high)[settings.volume.coerceIn(0, 2)])
     PageColumn {
         Header(stringResource(R.string.tab_settings), "settings", settings, flow)
-        if (ringing(state)) AmberBar(state, flow, zh, 184.dp)
+        if (ringing(state)) AmberBar(state, flow, zh, 160.dp)
         else Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(W.GAP)) {
-            BigButton(stringResource(R.string.vol_fmt, volName), "settings/volume", onClick = { flow.cycleVolume() }, modifier = Modifier.weight(1f), icon = R.drawable.ic_volume_up, height = 184.dp, stacked = true)
-            BigButton(stringResource(R.string.lang_btn), "settings/lang", onClick = { flow.toggleLang(zh) }, modifier = Modifier.weight(1f), icon = R.drawable.ic_language, height = 184.dp, stacked = true)
+            BigButton(stringResource(R.string.vol_fmt, volName), "settings/volume", onClick = { flow.cycleVolume() }, modifier = Modifier.weight(1f), icon = R.drawable.ic_volume_up, height = 160.dp, stacked = true)
+            BigButton(stringResource(R.string.lang_btn), "settings/lang", onClick = { flow.toggleLang(zh) }, modifier = Modifier.weight(1f), icon = R.drawable.ic_language, height = 160.dp, stacked = true)
         }
         // D44: [叫回面前] and [退出] always on the first screen, never behind「更多」
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(W.GAP)) {
-            BigButton(stringResource(R.string.recall), "settings/recall", onClick = { flow.recall() }, modifier = Modifier.weight(1f), icon = R.drawable.ic_my_location, height = 184.dp, stacked = true)
-            BigButton(stringResource(R.string.exit), "settings/exit", onClick = { flow.exitAsk() }, modifier = Modifier.weight(1f), icon = R.drawable.ic_logout, height = 184.dp, stacked = true)
+            BigButton(stringResource(R.string.recall), "settings/recall", onClick = { flow.recall() }, modifier = Modifier.weight(1f), icon = R.drawable.ic_my_location, height = 160.dp, stacked = true)
+            BigButton(stringResource(R.string.exit), "settings/exit", onClick = { flow.exitAsk() }, modifier = Modifier.weight(1f), icon = R.drawable.ic_logout, height = 160.dp, stacked = true)
         }
-        Txt(stringResource(R.string.version_line, BuildConfig.VERSION_NAME), "settings/version", style = PicoTheme.typography.bodySmall.copy(fontSize = 18.sp, lineHeight = 22.sp), color = PicoTheme.colorScheme.labelSecondary, modifier = Modifier.heightIn(min = 24.dp))
+        // ui_gates how-to (B19): one page that says how every main action is done, by hand and by controller
+        BigButton(stringResource(R.string.how_to_title), "settings/howto", onClick = { flow.howToOpen() }, modifier = Modifier.fillMaxWidth(), icon = R.drawable.ic_help, height = 64.dp)
+    }
+}
+
+/** 怎么操作: each main action = icon + by hand (eyes + pinch) + by controller (ray + trigger). Plain text, no targets. */
+@Composable
+private fun HowToPage(settings: Settings, flow: CookFlow) {
+    val rows = listOf(
+        Triple(R.drawable.ic_clock_fill, R.string.how_to_pick, R.string.how_to_pick_pad),
+        Triple(R.drawable.ic_local_fire_department, R.string.how_to_place, R.string.how_to_place_pad),
+        Triple(R.drawable.ic_add, R.string.how_to_time, R.string.how_to_time_pad),
+        Triple(R.drawable.ic_check, R.string.how_to_stop, R.string.how_to_stop_pad),
+    )
+    PageColumn {
+        Header(stringResource(R.string.how_to_title), "howto", settings, flow)
+        Column(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(ChefColors.CardFill).padding(horizontal = 28.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            rows.forEachIndexed { i, (icon, hand, pad) ->
+                Row(Modifier.fillMaxWidth().heightIn(min = 60.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Icon(painter = painterResource(icon), contentDescription = null, tint = ChefColors.CardInk, modifier = Modifier.size(32.dp))
+                    Column(Modifier.weight(1f)) {
+                        Txt(stringResource(hand), "howto/$i/hand", style = PicoTheme.typography.bodyLarge.copy(fontSize = 22.sp, lineHeight = 28.sp), color = ChefColors.CardInk)
+                        Txt(stringResource(pad), "howto/$i/pad", style = PicoTheme.typography.bodyMedium.copy(fontSize = 18.sp, lineHeight = 24.sp), color = ChefColors.InkSecondary)
+                    }
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(W.GAP)) {
+            BigButton(stringResource(R.string.how_to_back), "howto/back", onClick = { flow.howToClose() }, icon = R.drawable.ic_chevron_left, height = 64.dp, modifier = Modifier.width(220.dp))
+            Txt(stringResource(R.string.version_line, BuildConfig.VERSION_NAME), "howto/version", style = PicoTheme.typography.bodySmall.copy(fontSize = 18.sp, lineHeight = 22.sp), color = PicoTheme.colorScheme.labelSecondary, modifier = Modifier.weight(1f), align = TextAlign.End)
+        }
     }
 }
 

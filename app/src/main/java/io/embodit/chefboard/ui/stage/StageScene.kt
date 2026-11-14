@@ -35,6 +35,7 @@ import io.embodit.chefboard.domain.place.Arrange
 import io.embodit.chefboard.domain.place.ColdStart
 import io.embodit.chefboard.domain.place.HeadSampler
 import io.embodit.chefboard.domain.place.Layout
+import io.embodit.chefboard.domain.recipe.StepModels
 import io.embodit.chefboard.domain.timer.Hint
 import io.embodit.chefboard.domain.timer.Place
 import io.embodit.chefboard.domain.timer.TState
@@ -168,6 +169,9 @@ class StageScene(private val graph: Graph, private val context: Context) {
     private var pausedPopAt = 0L
     private var lastStaged: Int? = null
     private var lastPauseFocus: Int? = null
+    /** E7 step food (v0.1.4). */
+    private val food = FoodShelf(context, scope)
+    private var foodRecipe: String? = null
 
     // ------------------------------------------------------------------ lifecycle
 
@@ -218,6 +222,7 @@ class StageScene(private val graph: Graph, private val context: Context) {
         graph.panOf = null; graph.spatialBell = null; graph.recallFn = null
         if (ActiveScene.scene === this) ActiveScene.scene = null
         runCatching { hudHolder?.removeAllChildren() }
+        runCatching { food.close() }
         runCatching { root?.destroy(true) }
         res?.close(); res = null
     }
@@ -245,6 +250,7 @@ class StageScene(private val graph: Graph, private val context: Context) {
         root.addChild(k)
         k.place(position = Vec3(0f, -20f, 0f)) // hidden until the kitchen pose is known
         kitchenRoot = k
+        food.attach(k)
         runCatching { root.components.set(EnvironmentLightingSettingsComponent(1.0f)) }.onFailure { AppLog.w("ENV LIGHT unavailable: $it") }
         // B24: one moderate warm key light from above front-right (intensity: see ui-audit 灯光)
         runCatching {
@@ -419,8 +425,28 @@ class StageScene(private val graph: Graph, private val context: Context) {
         renderSpots(now)
         renderButtons(r, now)
         renderHints(now, hp)
+        renderFood(hp)
         hudFrame(hp)
     }
+
+    /** E7: the food of the cook page (prep row / step), also while the window shows another page mid-recipe; the
+     *  finished page keeps the last step's dish. Nothing before a recipe is opened. */
+    private fun renderFood(hp: HeadPose?) {
+        val p = pose ?: return
+        val st = flow.s
+        val r = flow.current
+        if (r?.id != foodRecipe) { foodRecipe = r?.id; r?.let { food.preload(StepModels.forRecipe(it)) } }
+        val pages = flow.pages
+        val pg = if (r == null || st.loading || forceLoading) null else pages.getOrNull(if (st.done) pages.size - 1 else st.pageIndex)
+        val ids = if (r != null && pg != null) StepModels.forPage(r, pg) else emptyList()
+        val key = if (pg != null) "${r?.id}/${pg.stepNo}" else null
+        val eye = hp?.position ?: lastPose?.position
+        val eyeLocal = eye?.let { p.toLocal(it) } ?: Vec3.ZERO
+        food.frame(key, ids, eyeLocal, SystemClock.elapsedRealtime())
+    }
+
+    /** debug `food`. */
+    fun foodLine(): String = food.dump()
 
     private val logged = BooleanArray(3)
     private fun logPlacement(now: Long) {

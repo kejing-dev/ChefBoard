@@ -60,4 +60,14 @@
     <string name="btn_clear">Clear</string>
     <string name="btn_back">Put back</string>
     <string name="plate_name">ChefBoard</string>
+    <string name="how_to_title">How to use</string>
+    <string name="how_to_pick">Look at a timer on the rack, pinch</string>
+    <string name="how_to_pick_pad">Controller: point at it, pull the trigger</string>
+    <string name="how_to_place">Look at a ring by the pot, pinch: it starts</string>
+    <string name="how_to_place_pad">Controller: point at the ring, pull the trigger</string>
+    <string name="how_to_time">Pinch +1 / +5 to add time, Clear to reset</string>
+    <string name="how_to_time_pad">Controller: point at the button, pull the trigger</string>
+    <string name="how_to_stop">When it rings, pinch it or tap the amber bar</string>
+    <string name="how_to_stop_pad">Controller: point at it and pull the trigger</string>
+    <string name="how_to_back">Back</string>
 </resources>

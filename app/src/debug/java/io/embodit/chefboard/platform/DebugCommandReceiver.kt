@@ -103,12 +103,14 @@ class DebugCommandReceiver : BroadcastReceiver() {
             "recall" -> flow.recall()
             "exitask" -> flow.exitAsk()
             "exitcancel" -> flow.exitCancel()
+            "howto" -> if (a == "close") flow.howToClose() else flow.howToOpen()
             "exit" -> flow.exitConfirm()
             "closewindow" -> graph.window.close()
             "openwindow" -> graph.window.request("debug", null)
             "wipe" -> graph.wipe()
             "dump" -> AppLog.i("DUMP state=${flow.s.stateId} page=${flow.s.page} recipe=${flow.s.recipeId} step=${flow.s.pageIndex} settings=${flow.settings.value} ${scene?.dumpLine()} dp=${Layout.mPerDp} dist=${Layout.windowDist}")
             "where" -> AppLog.i("WHERE ${scene?.whereLine()}")
+            "food" -> AppLog.i("FOODDUMP ${scene?.foodLine()}")
             else -> AppLog.i("CMD unknown $cmd")
         }
     }
