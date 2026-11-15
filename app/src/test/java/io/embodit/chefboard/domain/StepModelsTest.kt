@@ -156,7 +156,7 @@ class StepModelsTest {
     /** apps/chef-board/build/step-models.md source: 菜谱 / 步骤 → 模型文件 → Tripo 提示词 (written to app/build). */
     @Test fun writeStepModelsTable() {
         val ft = feet()
-        val sb = StringBuilder("# ChefBoard v0.1.4 · 每步食物模型（E7）\n\n")
+        val sb = StringBuilder("# ChefBoard v0.1.5 · 每步食物模型（E7）\n\n")
         sb.append("由 `StepModelsTest.writeStepModelsTable` 从 `StepModels.kt` 生成。模型文件都在 `app/src/main/assets/models/food/`，原始 Tripo GLB 在 `~/Downloads/chef-board-tripo/`。\n\n")
         sb.append("## 菜谱 / 步骤 → 模型\n\n| 菜谱 | 步骤 | 文案 | 模型文件 |\n|---|---|---|---|\n")
         for (r in Builtin.all) for (p in CookPages.of(r)) {

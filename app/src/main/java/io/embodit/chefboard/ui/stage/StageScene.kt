@@ -438,8 +438,9 @@ class StageScene(private val graph: Graph, private val context: Context) {
         if (r?.id != foodRecipe) { foodRecipe = r?.id; r?.let { food.preload(StepModels.forRecipe(it)) } }
         val pages = flow.pages
         val pg = if (r == null || st.loading || forceLoading) null else pages.getOrNull(if (st.done) pages.size - 1 else st.pageIndex)
-        val ids = if (r != null && pg != null) StepModels.forPage(r, pg) else emptyList()
-        val key = if (pg != null) "${r?.id}/${pg.stepNo}" else null
+        val solo = food.solo
+        val ids = if (solo != null) listOf(solo.first) else if (r != null && pg != null) StepModels.forPage(r, pg) else emptyList()
+        val key = if (solo != null) "solo/${solo.first}/${solo.second}" else if (pg != null) "${r?.id}/${pg.stepNo}" else null
         val eye = hp?.position ?: lastPose?.position
         val eyeLocal = eye?.let { p.toLocal(it) } ?: Vec3.ZERO
         food.frame(key, ids, eyeLocal, SystemClock.elapsedRealtime())
@@ -447,6 +448,9 @@ class StageScene(private val graph: Graph, private val context: Context) {
 
     /** debug `food`. */
     fun foodLine(): String = food.dump()
+
+    /** debug `foodsolo <id> [yawDeg]` / `foodsolo off`: one enlarged model for a close-up (白模排查). */
+    fun foodSolo(id: String?, yawDeg: Float) { food.solo = id?.let { it to yawDeg } }
 
     private val logged = BooleanArray(3)
     private fun logPlacement(now: Long) {

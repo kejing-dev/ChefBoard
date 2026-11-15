@@ -39,3 +39,6 @@ google-services.json
 tools/harness/.state/
 tools/test/out/
 .env
+
+# ui_gates pale-model cache
+.pale-model-cache.json

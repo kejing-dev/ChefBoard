@@ -111,6 +111,7 @@ class DebugCommandReceiver : BroadcastReceiver() {
             "dump" -> AppLog.i("DUMP state=${flow.s.stateId} page=${flow.s.page} recipe=${flow.s.recipeId} step=${flow.s.pageIndex} settings=${flow.settings.value} ${scene?.dumpLine()} dp=${Layout.mPerDp} dist=${Layout.windowDist}")
             "where" -> AppLog.i("WHERE ${scene?.whereLine()}")
             "food" -> AppLog.i("FOODDUMP ${scene?.foodLine()}")
+            "foodsolo" -> { val parts = a.trim().split(" "); scene?.foodSolo(parts[0].takeIf { it.isNotEmpty() && it != "off" }, parts.getOrNull(1)?.toFloatOrNull() ?: 0f); AppLog.i("FOODSOLO $a") }
             else -> AppLog.i("CMD unknown $cmd")
         }
     }

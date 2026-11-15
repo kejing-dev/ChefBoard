@@ -21,6 +21,34 @@ FACES = 12000
 # Tripo posed these diagonally / standing although the prompt says "lying flat": principal-axis align them first
 # (longest axis -> x, thinnest -> y up) so they lie on the counter.
 LIE_FLAT = {"seabass"}
+# v0.1.5 (门 C「有几个食材是白模没颜色」, ui_gates pale-model): base-colour fixes after the Tripo regeneration.
+# id -> (saturation multiplier, warm tint for the grey pixels or None, tint strength 0..1).
+#   pot_eggs: Tripo baked the stainless pan as flat light grey, which reads as a white model on the headset (no metallic
+#             map survives decimation) -> the same warm copper-steel as pot_boil, the pot the eggs go into one step earlier.
+#   seabass:  silver sides + blue-green back come out almost grey -> push the blue-green.
+#   rice_bowl: the blue-and-white porcelain is right; a little more cobalt so the white rice is not the whole read.
+RECOLOR = {
+    "pot_eggs": (1.0, (1.0, 0.74, 0.46), 0.75),
+    "seabass": (1.9, None, 0.0),
+    "rice_bowl": (1.35, None, 0.0),
+}
+
+
+def recolor(img, sat_k, tint, strength):
+    from PIL import Image, ImageEnhance
+    mode = img.mode
+    rgb = img.convert("RGB")
+    if tint is not None:
+        a = np.asarray(rgb).astype(np.float32) / 255.0
+        sat = a.max(2) - a.min(2)
+        w = (np.clip(1.0 - sat / 0.25, 0.0, 1.0) * strength)[..., None]
+        a = a * (1.0 - w) + (a * np.array(tint, np.float32)) * w
+        rgb = Image.fromarray((np.clip(a, 0, 1) * 255).astype(np.uint8))
+    if sat_k != 1.0:
+        rgb = ImageEnhance.Color(rgb).enhance(sat_k)
+    if mode == "RGBA":
+        rgb.putalpha(img.getchannel("A"))
+    return rgb
 
 
 def catalog():
@@ -72,6 +100,8 @@ def prep(mid, size, index):
         mat = getattr(g.visual, "material", None)
         if mat is not None and hasattr(mat, "alphaMode"):
             mat.alphaMode = "OPAQUE"
+        if mid in RECOLOR and mat is not None and getattr(mat, "baseColorTexture", None) is not None:
+            mat.baseColorTexture = recolor(mat.baseColorTexture, *RECOLOR[mid])
     out = os.path.join(OUT, f"{mid}.glb")
     scene.export(out)
     lo2, hi2 = trimesh.load(out, force="scene").bounds

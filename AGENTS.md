@@ -54,6 +54,7 @@ TAP3D BELL PLACE WINDOW HUD DIAG CMD DUMP WHERE OVERFLOW LINES SOUND LANG PASTE 
 | `mute on\|off` · `volume 0-2` · `lang zh\|en\|system` · `recall` · `exitask` · `exitcancel` · `exit` | settings |
 | `closewindow` · `openwindow` · `wipe` · `dump` · `where` | misc (`where` = world positions of rack / rings / timers) |
 | `food` | `FOODDUMP` line: food models on the counter now (id @ kitchen-frame base), templates loaded, failed ids |
+| `foodsolo <id> [yawDeg]` · `foodsolo off` | v0.1.5: one food model alone, enlarged to 22 cm, 0.55 m in front of the eye (close-up for the pale-model check; `closewindow` first) |
 
 ## Screenshot list for QA (design states[])
 

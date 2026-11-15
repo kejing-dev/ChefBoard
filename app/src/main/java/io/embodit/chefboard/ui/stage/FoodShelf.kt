@@ -33,7 +33,14 @@ internal class FoodShelf(private val context: Context, private val scope: Corout
     private val failed = HashSet<String>()
     val feet: Map<String, Layout.Foot> by lazy { readFeet() }
 
-    private class Item(val id: String, val e: Entity, val base: Vec3, val bornMs: Long, var fadingOutAt: Long = -1L, var opaque: Boolean = false)
+    private class Item(val id: String, val e: Entity, val base: Vec3, val bornMs: Long, var fadingOutAt: Long = -1L, var opaque: Boolean = false, val k: Float = 1f, val yawDeg: Float = 0f)
+
+    /**
+     * Debug `foodsolo <id> [yawDeg]` (v0.1.5 白模排查): one model alone, enlarged so its longest side is [SOLO_SIZE_M],
+     * 0.55 m in front of the eye on the window side, turned [yawDeg] from facing the eye — a close-up for every model.
+     * null = the normal cook-page food.
+     */
+    var solo: Pair<String, Float>? = null
     private val live = ArrayList<Item>()
     private var shownKey: String? = null
     private var root: Entity? = null
@@ -95,13 +102,18 @@ internal class FoodShelf(private val context: Context, private val scope: Corout
             shownKey = key
             live.forEach { if (it.fadingOutAt < 0) it.fadingOutAt = now }
             val use = ids.map { if (templates.containsKey(it)) it else StepModels.BASKET }.filter { templates.containsKey(it) }
-            val spots = Layout.foodSpots(use.map { foot(it) })
+            val soloYaw = solo?.second
+            val spots = if (key?.startsWith("solo/") == true) listOf(Layout.dir(Layout.FOOD_AZ) * SOLO_DIST + Vec3(0f, SOLO_Y, 0f))
+                else Layout.foodSpots(use.map { foot(it) })
             use.forEachIndexed { i, id ->
+                if (i >= spots.size) return@forEachIndexed
                 val e = templates[id]?.let { runCatching { it.clone(Entity.CloneOptions(true, true)) }.getOrNull() } ?: return@forEachIndexed
                 e.setName("food:$id"); e.enabled = true
                 e.components.set(OpacityControllerComponent(0f))
                 r.addChild(e)
-                live += Item(id, e, spots[i], now + i * STAGGER_MS)
+                val f = foot(id)
+                val k = if (soloYaw != null && key?.startsWith("solo/") == true) SOLO_SIZE_M / maxOf(f.w, f.d, f.h) else 1f
+                live += Item(id, e, spots[i], now + i * STAGGER_MS, k = k, yawDeg = if (k != 1f) soloYaw ?: 0f else 0f)
             }
             lastShown = "key=$key ids=${use.joinToString(",")}"
             AppLog.i("FOOD show $lastShown")
@@ -109,12 +121,13 @@ internal class FoodShelf(private val context: Context, private val scope: Corout
         val it = live.iterator()
         while (it.hasNext()) {
             val m = it.next()
-            val rot = Quat4.axisAngle(Vec3.UP, atan2(eyeLocal.x - m.base.x, eyeLocal.z - m.base.z))
+            val rot = Quat4.axisAngle(Vec3.UP, atan2(eyeLocal.x - m.base.x, eyeLocal.z - m.base.z) + Math.toRadians(m.yawDeg.toDouble()).toFloat())
+            val sc = Vec3(m.k, m.k, m.k)
             if (m.fadingOutAt >= 0) {
                 val u = ((now - m.fadingOutAt).toFloat() / OUT_MS).coerceIn(0f, 1f)
                 if (m.opaque) { m.e.components.set(OpacityControllerComponent(1f)); m.opaque = false }
                 m.e.components[OpacityControllerComponent::class.java]?.opacity = 1f - u
-                m.e.place(position = m.base + Vec3(0f, -0.01f * u, 0f), rotation = rot)
+                m.e.place(position = m.base + Vec3(0f, -0.01f * u, 0f), rotation = rot, scale = sc)
                 if (u >= 1f) { runCatching { m.e.destroy(true) }; it.remove() }
                 continue
             }
@@ -124,7 +137,7 @@ internal class FoodShelf(private val context: Context, private val scope: Corout
                 if (u >= 1f) { m.e.components.remove(OpacityControllerComponent::class.java); m.opaque = true }
                 else m.e.components[OpacityControllerComponent::class.java]?.opacity = e
             }
-            m.e.place(position = m.base + Vec3(0f, 0.015f * (1f - e), 0f), rotation = rot)
+            m.e.place(position = m.base + Vec3(0f, 0.015f * (1f - e), 0f), rotation = rot, scale = sc)
         }
     }
 
@@ -144,5 +157,8 @@ internal class FoodShelf(private val context: Context, private val scope: Corout
         const val IN_MS = 300f
         const val OUT_MS = 180f
         const val STAGGER_MS = 70L
+        const val SOLO_SIZE_M = 0.22f
+        const val SOLO_DIST = 0.55f
+        const val SOLO_Y = -0.22f
     }
 }
