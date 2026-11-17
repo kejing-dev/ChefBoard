@@ -5,7 +5,7 @@ import android.util.Log
 const val TAG = "ChefBoard"
 
 /**
- * One line per event under the tag `BeatPad` with stable prefixes (verification.debugHooks): STATE MEASURE CHIP
+ * One line per event under the tag `ChefBoard` with stable prefixes (verification.debugHooks): STATE MEASURE CHIP
  * CALC BODY PLACE ANCHOR WINDOW CMD DUMP PLANES TAP ... Every line is also mirrored into files/input-log.txt by
  * BoardInputLog (headset logcat drops app lines, board-input README).
  */
